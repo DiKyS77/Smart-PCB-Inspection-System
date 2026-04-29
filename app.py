@@ -1,12 +1,44 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, url_for
 from db import get_db
 import hashlib
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'secret123'
 
+# ================= CONFIG UPLOAD =================
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# pastikan folder ada
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+# ================= HELPER =================
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.context_processor
+def inject_user():
+    return dict(
+        username=session.get('username'),
+        role=session.get('role')
+    )
+
+
+# ================= LANDING PAGE =================
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+
 # ================= LOGIN =================
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         user_id = request.form['id']
@@ -25,14 +57,15 @@ def login():
 
         if user:
             session['user_id'] = user['id']
+            session['username'] = user['username']
             session['role'] = user['role']
 
             if user['role'] == 'admin':
                 return redirect('/admin')
             else:
-                return redirect('/karyawan')
+                return redirect('/technician')
         else:
-            return render_template('auth/login.html', error="Login gagal")
+            return render_template('auth/login.html', error="ID atau password salah.")
 
     return render_template('auth/login.html')
 
@@ -40,76 +73,90 @@ def login():
 # ================= ADMIN =================
 @app.route('/admin')
 def admin_dashboard():
-    if 'role' in session and session['role'] == 'admin':
+    if session.get('role') == 'admin':
         return render_template('admin/dashboard.html')
-    return redirect('/')
+    return redirect('/login')
 
 
 @app.route('/admin/manage-user')
 def admin_manage_user():
-    if 'role' in session and session['role'] == 'admin':
+    if session.get('role') == 'admin':
         return render_template('admin/manage_user.html')
-    return redirect('/')
+    return redirect('/login')
 
 
 @app.route('/admin/report')
 def admin_report():
-    if 'role' in session and session['role'] == 'admin':
+    if session.get('role') == 'admin':
         return render_template('admin/report.html')
-    return redirect('/')
+    return redirect('/login')
 
 
-@app.route('/admin/add-user')
-def admin_add_user():
-    return render_template('admin/add_user.html')
+# ================= TECHNICIAN =================
+@app.route('/technician')
+def technician_dashboard():
+    if session.get('role') == 'technician':
+        return render_template('technician/dashboard.html')
+    return redirect('/login')
 
 
-@app.route('/admin/edit-user/<int:id>')
-def admin_edit_user(id):
-    return f"Edit user {id}"
+@app.route('/technician/detection')
+def technician_detection():
+    if session.get('role') == 'technician':
+        return render_template('technician/detection.html')
+    return redirect('/login')
 
 
-@app.route('/admin/delete-user/<int:id>')
-def admin_delete_user(id):
-    return f"Hapus user {id}"
+# ================= 🔥 DETEKSI (UPLOAD + HASIL) =================
+@app.route('/detect', methods=['POST'])
+def detect():
+    if session.get('role') != 'technician':
+        return redirect('/login')
+
+    file = request.files.get('image')
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+
+        # ================= AI MODEL (Sementara Dummy) =================
+        result = "Missing Hole"
+        accuracy = 96.42
+        status = "CACAT"
+
+        return render_template(
+            'technician/detection.html',
+            image=filepath,
+            result=result,
+            accuracy=accuracy,
+            status=status
+        )
+
+    return redirect('/technician/detection')
 
 
-
-# ================= KARYAWAN =================
-@app.route('/karyawan')
-def karyawan_dashboard():
-    if 'role' in session and session['role'] == 'karyawan':
-        return render_template('karyawan/dashboard.html')
-    return redirect('/')
+@app.route('/technician/history')
+def technician_history():
+    if session.get('role') == 'technician':
+        return render_template('technician/history.html')
+    return redirect('/login')
 
 
-@app.route('/karyawan/detection')
-def karyawan_detection():
-    if 'role' in session and session['role'] == 'karyawan':
-        return render_template('karyawan/detection.html')
-    return redirect('/')
-
-
-@app.route('/karyawan/history')
-def karyawan_history():
-    if 'role' in session and session['role'] == 'karyawan':
-        return render_template('karyawan/history.html')
-    return redirect('/')
-
-
-@app.route('/karyawan/report')
-def karyawan_report():
-    if 'role' in session and session['role'] == 'karyawan':
-        return render_template('karyawan/report.html')
-    return redirect('/')
+@app.route('/technician/report')
+def technician_report():
+    if session.get('role') == 'technician':
+        return render_template('technician/report.html')
+    return redirect('/login')
 
 
 # ================= LOGOUT =================
 @app.route('/logout')
 def logout():
     session.clear()
-    return redirect('/')
+    return redirect('/login')
 
 
+# ================= RUN =================
 if __name__ == '__main__':
     app.run(debug=True)

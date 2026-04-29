@@ -1,76 +1,133 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Login</title>
 
     <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-    <!-- MDB -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-    <!-- Font Awesome (icon mata) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-</head>
+    <style>
+      body {
+        height: 100vh;
+        margin: 0;
+        background: url('https://www.transparenttextures.com/patterns/circuit-board.png'), linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', sans-serif;
+      }
+      
+      .login-card {
+        width: 350px;
+        padding: 30px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(15px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        color: white;
+      }
+      
+      .login-card h3 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+      }
+      
+      .input-group {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 15px;
+        margin-bottom: 15px;
+        overflow: hidden;
+      }
+      
+      .input-group-text {
+        background: transparent;
+        border: none;
+        color: white;
+      }
+      
+      .form-control {
+        background: transparent;
+        border: none;
+        color: white;
+      }
+      
+      .form-control:focus {
+        box-shadow: none;
+        background: transparent;
+        color: white;
+      }
+      
+      .form-control::placeholder {
+        color: #ddd;
+      }
+      
+      .btn-login {
+        width: 100%;
+        border-radius: 20px;
+        padding: 10px;
+        background: linear-gradient(90deg, #56ccf2, #2f80ed);
+        border: none;
+        color: white;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+      
+      .btn-login:hover {
+        opacity: 0.9;
+      }
+      
+      .eye-icon {
+        cursor: pointer;
+        color: white;
+      }
+    </style>
+  </head>
 
-<body class="bg-light">
+  <body>
+    <div class="login-card">
+      <h3>Login</h3>
 
-<div class="container mt-5">
-    <div class="card p-4 col-md-4 mx-auto shadow">
-
-        <h3 class="text-center mb-4">Login</h3>
-
-        {% if error %}
+      {% if error %}
         <div class="alert alert-danger">{{ error }}</div>
-        {% endif %}
+      {% endif %}
 
-        <form method="POST">
+      <form method="POST">
+        <!-- ID -->
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa fa-user"></i></span>
+          <input type="number" name="id" class="form-control" placeholder="ID Karyawan" required />
+        </div>
 
-            <!-- ID -->
-            <div class="form-outline mb-4">
-                <input type="number" name="id" class="form-control" required />
-                <label class="form-label">ID Karyawan</label>
-            </div>
+        <!-- Password -->
+        <div class="input-group">
+          <span class="input-group-text"><i class="fa fa-lock"></i></span>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Password" required />
 
-            <!-- Password + Eye Icon -->
-            <div class="form-outline mb-4 position-relative">
-                <input type="password" id="password" name="password" class="form-control" required />
-                <label class="form-label">Password</label>
+          <span class="input-group-text"><i class="fa fa-eye eye-icon" id="togglePassword"></i></span>
+        </div>
 
-                <!-- Icon -->
-                <i class="fa-solid fa-eye position-absolute"
-                   id="togglePassword"
-                   style="top: 50%; right: 15px; transform: translateY(-50%); cursor: pointer;">
-                </i>
-            </div>
-
-            <!-- Submit -->
-            <button type="submit" class="btn btn-primary w-100 mb-4">
-                Login
-            </button>
-
-        </form>
-
+        <!-- Submit -->
+        <button type="submit" class="btn btn-login">Log In</button>
+      </form>
     </div>
-</div>
 
-<!-- MDB JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/6.4.0/mdb.min.js"></script>
-
-<!-- Script Show/Hide Password -->
-<script>
-    const togglePassword = document.querySelector('#togglePassword');
-    const password = document.querySelector('#password');
-
-    togglePassword.addEventListener('click', function () {
-        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-        password.setAttribute('type', type);
-
-        // ganti icon
-        this.classList.toggle('fa-eye');
-        this.classList.toggle('fa-eye-slash');
-    });
-</script>
-
-</body>
+    <!-- Script Show/Hide Password -->
+    <script>
+      const togglePassword = document.querySelector('#togglePassword')
+      const password = document.querySelector('#password')
+      
+      togglePassword.addEventListener('click', function () {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password'
+        password.setAttribute('type', type)
+      
+        this.classList.toggle('fa-eye')
+        this.classList.toggle('fa-eye-slash')
+      })
+    </script>
+  </body>
 </html>

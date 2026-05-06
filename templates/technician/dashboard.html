@@ -455,19 +455,19 @@
         <div class="stat-card">
           <div class="icon" style="background: rgba(22, 163, 74, 0.12); color: #16a34a;"><i class="fas fa-chart-line"></i></div>
           <small>Total Deteksi</small>
-          <h3>50</h3>
+          <h3>{{ total_detections }}</h3>
           <small>Semua Waktu</small>
         </div>
         <div class="stat-card">
           <div class="icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;"><i class="fas fa-bolt"></i></div>
           <small>Cacat Terbanyak</small>
-          <h3>50</h3>
+          <h3>{{ top_defect }}</h3>
           <small>Semua Waktu</small>
         </div>
         <div class="stat-card">
           <div class="icon" style="background: rgba(239, 68, 68, 0.12); color: #dc2626;"><i class="fas fa-shield-alt"></i></div>
           <small>Rata-rata Keyakinan</small>
-          <h3>50</h3>
+          <h3>{{ avg_accuracy }}%</h3>
           <small>Rata-rata confidence AI</small>
         </div>
       </div>
@@ -475,54 +475,48 @@
       <div class="summary-section">
         <h5>Ringkasan Jenis Cacat</h5>
         <div class="summary-cards">
-          <div class="summary-item" style="background: rgba(254, 226, 226, 0.7);">
-            <div class="meta">
-              <h6>spurious_copper</h6>
-              <div class="icon" style="background: rgba(239, 68, 68, 0.18); color: #dc2626;"><i class="fas fa-microchip"></i></div>
+          {% for item in defect_summary %}
+            {% if item.defect_type == 'spurious_copper' %}
+            <div class="summary-item" style="background: rgba(254, 226, 226, 0.7);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(239, 68, 68, 0.18); color: #dc2626;"><i class="fas fa-microchip"></i></div>
+              </div>
+            {% elif item.defect_type == 'spur' %}
+            <div class="summary-item" style="background: rgba(255, 237, 213, 0.8);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(251, 146, 60, 0.18); color: #f97316;"><i class="fas fa-bolt"></i></div>
+              </div>
+            {% elif item.defect_type == 'mouse_bite' %}
+            <div class="summary-item" style="background: rgba(219, 234, 254, 0.75);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(59, 130, 246, 0.18); color: #2563eb;"><i class="fas fa-mouse"></i></div>
+              </div>
+            {% elif item.defect_type == 'missing_hole' %}
+            <div class="summary-item" style="background: rgba(237, 233, 254, 0.8);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(168, 85, 247, 0.18); color: #8b5cf6;"><i class="fas fa-search"></i></div>
+              </div>
+            {% elif item.defect_type == 'short' %}
+            <div class="summary-item" style="background: rgba(220, 252, 231, 0.8);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(34, 197, 94, 0.18); color: #16a34a;"><i class="fas fa-bolt"></i></div>
+              </div>
+            {% else %}
+            <div class="summary-item" style="background: rgba(207, 250, 254, 0.8);">
+              <div class="meta">
+                <h6>{{ item.defect_type }}</h6>
+                <div class="icon" style="background: rgba(14, 165, 233, 0.18); color: #0ea5e9;"><i class="fas fa-plug"></i></div>
+              </div>
+            {% endif %}
+              <div class="value">{{ item.count }}</div>
+              <div class="percentage">{{ item.percent }}%</div>
             </div>
-            <div class="value">50</div>
-            <div class="percentage">45.83%</div>
-          </div>
-          <div class="summary-item" style="background: rgba(255, 237, 213, 0.8);">
-            <div class="meta">
-              <h6>spur</h6>
-              <div class="icon" style="background: rgba(251, 146, 60, 0.18); color: #f97316;"><i class="fas fa-bolt"></i></div>
-            </div>
-            <div class="value">50</div>
-            <div class="percentage">45.83%</div>
-          </div>
-          <div class="summary-item" style="background: rgba(219, 234, 254, 0.75);">
-            <div class="meta">
-              <h6>mouse_bite</h6>
-              <div class="icon" style="background: rgba(59, 130, 246, 0.18); color: #2563eb;"><i class="fas fa-mouse"></i></div>
-            </div>
-            <div class="value">50</div>
-            <div class="percentage">45.83%</div>
-          </div>
-          <div class="summary-item" style="background: rgba(237, 233, 254, 0.8);">
-            <div class="meta">
-              <h6>missing_hole</h6>
-              <div class="icon" style="background: rgba(168, 85, 247, 0.18); color: #8b5cf6;"><i class="fas fa-search"></i></div>
-            </div>
-            <div class="value">50</div>
-            <div class="percentage">45.83%</div>
-          </div>
-          <div class="summary-item" style="background: rgba(220, 252, 231, 0.8);">
-            <div class="meta">
-              <h6>short</h6>
-              <div class="icon" style="background: rgba(34, 197, 94, 0.18); color: #16a34a;"><i class="fas fa-bolt"></i></div>
-            </div>
-            <div class="value">10</div>
-            <div class="percentage">8.33%</div>
-          </div>
-          <div class="summary-item" style="background: rgba(207, 250, 254, 0.8);">
-            <div class="meta">
-              <h6>open_circuit</h6>
-              <div class="icon" style="background: rgba(14, 165, 233, 0.18); color: #0ea5e9;"><i class="fas fa-plug"></i></div>
-            </div>
-            <div class="value">0</div>
-            <div class="percentage">0%</div>
-          </div>
+          {% endfor %}
         </div>
       </div>
 
@@ -543,14 +537,14 @@
               <div class="icon" style="background: rgba(239, 68, 68, 0.12); color: #dc2626;"><i class="fas fa-arrow-up-right-from-square"></i></div>
               <div>
                 <h6>Cacat paling sering</h6>
-                <span>spurious_copper mendominasi dengan 99.0% dari total deteksi</span>
+                <span>{{ top_defect }} adalah yang paling sering muncul</span>
               </div>
             </div>
             <div class="insight-item">
-              <div class="icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;"><i class="fas fa-shield-check"></i></div>
+              <div class="icon" style="background: rgba(168, 85, 247, 0.16); color: #8b5cf6;"><i class="fas fa-check-circle"></i></div>
               <div>
                 <h6>Akurasi model stabil</h6>
-                <span>Rata-rata keyakinan model berada di 99.0% pada periode ini</span>
+                <span>Rata-rata keyakinan model berada di {{ avg_accuracy }}%</span>
               </div>
             </div>
           </div>
@@ -570,20 +564,21 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><img src="https://via.placeholder.com/82x82.png?text=PCB" alt="pcb" /></td>
-              <td>pcb_20240520_103015.jpg</td>
-              <td>20 Mei 2026<br />10:30:15</td>
-              <td><span class="badge badge-soft-red">spurious_copper</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><img src="https://via.placeholder.com/82x82.png?text=PCB" alt="pcb" /></td>
-              <td>pcb_20240520_103015.jpg</td>
-              <td>20 Mei 2026<br />10:30:15</td>
-              <td><span class="badge badge-soft-blue">mouse_bite</span></td>
-            </tr>
+            {% if recent_detections %}
+              {% for detection in recent_detections %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><img src="{{ detection.image_url or 'https://via.placeholder.com/82x82.png?text=PCB' }}" alt="pcb" /></td>
+                <td>{{ detection.file_name or 'Tidak tersedia' }}</td>
+                <td>{{ detection.created_at.strftime('%d %B %Y') }}<br />{{ detection.created_at.strftime('%H:%M:%S') }}</td>
+                <td><span class="badge {{ 'badge-soft-red' if detection.defect_type == 'spurious_copper' else 'badge-soft-blue' }}">{{ detection.defect_type }}</span></td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 24px;">Belum ada deteksi untuk ditampilkan.</td>
+              </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>
@@ -604,13 +599,15 @@
 
     <!-- Chart -->
     <script>
+      const defectLabels = {{ defect_labels|tojson }};
+      const defectValues = {{ defect_values|tojson }};
       new Chart(document.getElementById('chart'), {
         type: 'doughnut',
         data: {
-          labels: ['Spurious', 'Spur', 'Mouse Bite', 'Missing Hole', 'Short', 'Open Circuit'],
+          labels: defectLabels,
           datasets: [
             {
-              data: [45, 19, 5, 8, 10, 3],
+              data: defectValues,
               backgroundColor: ['#ff6b6b', '#ffa94d', '#4dabf7', '#b197fc', '#22c55e', '#0ea5e9']
             }
           ]

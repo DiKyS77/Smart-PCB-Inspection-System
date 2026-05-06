@@ -91,9 +91,9 @@
         color: #9ca3af;
       }
 
-      .main-wrapper {
+      .main {
         margin-left: 240px;
-        padding: 24px 26px 28px;
+        padding: 28px 30px 32px;
       }
 
       .report-header {
@@ -143,13 +143,26 @@
       }
 
       .summary-cards {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        display: flex;
         gap: 18px;
+        overflow-x: auto;
+        padding-bottom: 4px;
         margin-bottom: 26px;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .summary-cards::-webkit-scrollbar {
+        height: 8px;
+      }
+
+      .summary-cards::-webkit-scrollbar-thumb {
+        background: rgba(15, 23, 42, 0.18);
+        border-radius: 999px;
       }
 
       .summary-card {
+        min-width: 280px;
+        flex: 0 0 auto;
         background: #ffffff;
         border-radius: 22px;
         padding: 22px 20px;
@@ -317,7 +330,7 @@
       }
 
       @media (max-width: 767px) {
-        .main-wrapper {
+        .main {
           margin-left: 0;
           padding: 18px;
         }
@@ -371,7 +384,7 @@
       </div>
     </div>
 
-    <div class="main-wrapper">
+    <div class="main">
       <div class="report-header">
         <div class="report-title">
           <h1>Report</h1>
@@ -401,33 +414,14 @@
       </div>
 
       <div class="summary-cards">
+        {% for item in defect_summary %}
         <div class="summary-card">
           <div class="icon" style="background: rgba(251, 113, 133, 0.16); color: #ef4444;"> <i class="fas fa-bug"></i> </div>
-          <h5>spurious copper</h5>
-          <div class="value">50</div>
-          <div class="subtext text-danger">45.83%</div>
+          <h5>{{ item.defect_type }}</h5>
+          <div class="value">{{ item.count }}</div>
+          <div class="subtext text-danger">{{ item.percent }}%</div>
         </div>
-
-        <div class="summary-card">
-          <div class="icon" style="background: rgba(251, 146, 60, 0.18); color: #f97316;"> <i class="fas fa-wave-square"></i> </div>
-          <h5>spur</h5>
-          <div class="value">50</div>
-          <div class="subtext text-danger">45.83%</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="icon" style="background: rgba(59, 130, 246, 0.16); color: #2563eb;"> <i class="fas fa-mouse"></i> </div>
-          <h5>mouse bite</h5>
-          <div class="value">50</div>
-          <div class="subtext text-danger">45.83%</div>
-        </div>
-
-        <div class="summary-card">
-          <div class="icon" style="background: rgba(168, 85, 247, 0.16); color: #8b5cf6;"> <i class="fas fa-search"></i> </div>
-          <h5>missing hole</h5>
-          <div class="value">50</div>
-          <div class="subtext text-danger">45.83%</div>
-        </div>
+        {% endfor %}
       </div>
 
       <div class="report-chart">
@@ -437,7 +431,7 @@
               <h5>Distribusi Jenis Cacat</h5>
               <p class="label">Persentase distribusi setiap jenis cacat dari semua hasil deteksi</p>
             </div>
-            <span class="badge bg-secondary">Total 120</span>
+            <span class="badge bg-secondary">Total {{ report_total }}</span>
           </div>
           <div style="display: flex; align-items: center; justify-content: center;">
             <div style="width: 300px; height: 300px; position: relative;">
@@ -456,30 +450,36 @@
               </tr>
             </thead>
             <tbody>
+            {% for item in defect_summary %}
               <tr>
-                <td><span class="legend-badge" style="background: #ef4444"></span>spurious_copper</td>
-                <td>55 (45.83%)</td>
+                <td><span class="legend-badge" style="background: {{ '#ef4444' if item.defect_type == 'spurious_copper' else '#f97316' if item.defect_type == 'spur' else '#3b82f6' if item.defect_type == 'mouse_bite' else '#8b5cf6' if item.defect_type == 'short' else '#22c55e' if item.defect_type == 'missing_hole' else '#0ea5e9' }}"></span>{{ item.defect_type }}</td>
+                <td>{{ item.count }} ({{ item.percent }}%)</td>
               </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <h5>Ringkasan Total Cacat per Jenis</h5>
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <thead>
               <tr>
-                <td><span class="legend-badge" style="background: #f97316"></span>spur</td>
-                <td>35 (29.17%)</td>
+                <th>Jenis Cacat</th>
+                <th>Total</th>
+                <th>Persentase</th>
               </tr>
+            </thead>
+            <tbody>
+              {% for item in defect_summary %}
               <tr>
-                <td><span class="legend-badge" style="background: #3b82f6"></span>mouse_bite</td>
-                <td>20 (16.67%)</td>
+                <td>{{ item.defect_type }}</td>
+                <td>{{ item.count }}</td>
+                <td>{{ item.percent }}%</td>
               </tr>
-              <tr>
-                <td><span class="legend-badge" style="background: #8b5cf6"></span>short</td>
-                <td>10 (8.33%)</td>
-              </tr>
-              <tr>
-                <td><span class="legend-badge" style="background: #22c55e"></span>missing_hole</td>
-                <td>0 (0%)</td>
-              </tr>
-              <tr>
-                <td><span class="legend-badge" style="background: #0ea5e9"></span>open_circuit</td>
-                <td>0 (0%)</td>
-              </tr>
+              {% endfor %}
             </tbody>
           </table>
         </div>
@@ -499,20 +499,21 @@
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1</td>
-                <td><img src="https://via.placeholder.com/72x72.png?text=PCB" alt="pcb" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br />10:30:15</td>
-                <td><span class="badge bg-danger">spurious_copper</span></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td><img src="https://via.placeholder.com/72x72.png?text=PCB" alt="pcb" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br />10:30:15</td>
-                <td><span class="badge bg-primary">mouse_bite</span></td>
-              </tr>
+              {% if report_rows %}
+                {% for row in report_rows[:6] %}
+                <tr>
+                  <td>{{ loop.index }}</td>
+                  <td><img src="{{ row.image_url or 'https://via.placeholder.com/72x72.png?text=PCB' }}" alt="pcb" /></td>
+                  <td>{{ row.file_name or 'Tidak tersedia' }}</td>
+                  <td>{{ row.created_at.strftime('%d %B %Y') }}<br />{{ row.created_at.strftime('%H:%M:%S') }}</td>
+                  <td><span class="badge bg-{{ 'danger' if row.defect_type == 'spurious_copper' else 'primary' if row.defect_type == 'mouse_bite' else 'warning' if row.defect_type == 'spur' else 'info' }}">{{ row.defect_type }}</span></td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 24px;">Tidak ada data laporan untuk periode ini.</td>
+                </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>
@@ -523,12 +524,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
       const ctx = document.getElementById('reportChart');
+      const reportLabels = {{ defect_labels|tojson }};
+      const reportValues = {{ defect_values|tojson }};
       new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['spurious_copper', 'spur', 'mouse_bite', 'short', 'missing_hole', 'open_circuit'],
+          labels: reportLabels,
           datasets: [{
-            data: [55, 35, 20, 10, 0, 0],
+            data: reportValues,
             backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#8b5cf6', '#22c55e', '#0ea5e9'],
             borderWidth: 0
           }]

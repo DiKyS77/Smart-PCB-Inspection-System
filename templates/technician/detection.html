@@ -302,8 +302,13 @@
         <div>
           <h2 class="title">Detection</h2>
           <p>Unggah gambar PCB untuk mendeteksi cacat secara otomatis</p>
+          <p class="text-muted" style="margin: 8px 0 0;">ID: {{ user_id or '-' }} | Username: {{ username or '-' }}</p>
         </div>
       </div>
+
+      {% if error %}
+      <div class="alert alert-danger">{{ error }}</div>
+      {% endif %}
 
       <div class="upload-card">
         <div class="upload-box">
@@ -358,7 +363,7 @@
 
         if (file) {
           const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg']
-          const maxSize = 1 * 1024 * 1024
+          const maxSize = 5 * 1024 * 1024
 
           if (!allowedTypes.includes(file.type)) {
             alert('Gagal! File harus JPG, JPEG, atau PNG.')
@@ -368,7 +373,7 @@
           }
 
           if (file.size > maxSize) {
-            alert('Gagal! Ukuran file maksimal 1MB.')
+            alert('Gagal! Ukuran file maksimal 5MB.')
             fileInput.value = ''
             preview.style.display = 'none'
             return

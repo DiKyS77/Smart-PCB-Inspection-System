@@ -420,70 +420,22 @@
               </tr>
             </thead>
             <tbody id="historyTableBody">
-              <tr>
-                <td class="no">1</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-spurious-copper">spurious_copper</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">2</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-mouse-bite">mouse_bite</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">3</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-spurious-copper">spurious_copper</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">4</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-mouse-bite">mouse_bite</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">5</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-spurious-copper">spurious_copper</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">6</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-mouse-bite">mouse_bite</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">7</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-mouse-bite">mouse_bite</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
-              <tr>
-                <td class="no">8</td>
-                <td class="gambar"><img src="https://via.placeholder.com/60x60.png?text=PCB" alt="PCB" /></td>
-                <td>pcb_20240520_103015.jpg</td>
-                <td>20 Mei 2026<br>10:30:15</td>
-                <td><span class="defect-badge defect-spurious-copper">spurious_copper</span></td>
-                <td><a href="#" class="btn-detail">Lihat Detail</a></td>
-              </tr>
+              {% if history_rows %}
+                {% for row in history_rows %}
+                <tr>
+                  <td class="no">{{ loop.index }}</td>
+                  <td class="gambar"><img src="{{ row.image_url or 'https://via.placeholder.com/60x60.png?text=PCB' }}" alt="PCB" /></td>
+                  <td>{{ row.file_name or 'Tidak tersedia' }}</td>
+                  <td>{{ row.created_at.strftime('%d %B %Y') }}<br>{{ row.created_at.strftime('%H:%M:%S') }}</td>
+                  <td><span class="defect-badge defect-{{ row.defect_type|replace('_', '-') }}">{{ row.defect_type }}</span></td>
+                  <td><a href="{{ url_for('technician_history_detail', detection_id=row.id) }}" class="btn-detail">Lihat Detail</a></td>
+                </tr>
+                {% endfor %}
+              {% else %}
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 24px;">Belum ada histori deteksi.</td>
+                </tr>
+              {% endif %}
             </tbody>
           </table>
         </div>

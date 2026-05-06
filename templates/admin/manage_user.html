@@ -88,7 +88,7 @@
 
       main {
         margin-left: 240px;
-        padding: 20px;
+        padding: 28px 30px 32px;
       }
 
       @media (max-width: 991px) {
@@ -109,14 +109,6 @@
   </head>
 
   <body>
-    <!-- NAVBAR -->
-    <nav class="navbar navbar-expand-lg bg-white fixed-top shadow-sm">
-      <div class="container-fluid">
-        <button class="navbar-toggler" type="button" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-      </div>
-    </nav>
-
-    <!-- SIDEBAR -->
     <div id="sidebar" class="sidebar">
       <!-- TOP -->
       <div>
@@ -213,6 +205,9 @@
                       <i class="fas fa-check"></i> Aktifkan
                     </button>
                     {% endif %}
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteUser('{{ user.id }}')">
+                      <i class="fas fa-trash"></i> Hapus
+                    </button>
                   </td>
                 </tr>
                 {% endfor %}
@@ -273,7 +268,7 @@
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Edit Karyawan</h5>
+            <h5 class="modal-title" id="editModalTitle">Edit Karyawan</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
@@ -368,6 +363,7 @@
         document.getElementById('editUserId').value = userId;
         document.getElementById('editUserIdDisplay').value = userId;
         document.getElementById('editUserName').value = username;
+        document.getElementById('editModalTitle').textContent = `Edit Karyawan - ${username}`;
         document.getElementById('editUserPassword').value = '';
         document.getElementById('editUserConfirmPass').value = '';
 
@@ -418,6 +414,12 @@
         document.getElementById('userActionId').value = userId;
         document.getElementById('userActionType').value = action;
         document.getElementById('userActionForm').submit();
+      }
+
+      function confirmDeleteUser(userId) {
+        if (confirm('Hapus user ini? Aksi ini tidak dapat dibatalkan.')) {
+          submitUserAction(userId, 'delete');
+        }
       }
 
       document.addEventListener('DOMContentLoaded', function () {

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Laporan Admin</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+    <style>
+      body {
+        background: #eef3fb;
+        min-height: 100vh;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: 240px;
+        background: #1e40af;
+        color: #eef3fb;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 28px 22px;
+      }
+
+      .sidebar .logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 28px;
+        font-weight: 700;
+      }
+
+      .sidebar .logo i {
+        background: #37d08f;
+        color: #0f172a;
+        padding: 10px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+      }
+
+      .sidebar .menu a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #d6d8ef;
+        padding: 12px 14px;
+        border-radius: 14px;
+        text-decoration: none;
+        margin-bottom: 10px;
+        transition: background 0.2s ease, color 0.2s ease;
+      }
+
+      .sidebar .menu a:hover,
+      .sidebar .menu a.active {
+        background: rgba(255, 255, 255, 0.08);
+        color: #ffffff;
+      }
+
+      .sidebar .menu a.active {
+        border-left: 3px solid #37d08f;
+      }
+
+      .sidebar-footer {
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding-top: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sidebar-footer img {
+        width: 38px;
+        border-radius: 50%;
+      }
+
+      .sidebar-footer .user-info {
+        font-size: 12px;
+      }
+
+      .main {
+        margin-left: 240px;
+        padding: 28px 30px 32px;
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px;
+        margin-bottom: 24px;
+      }
+
+      .chart-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 20px;
+      }
+
+      .history-table img {
+        width: 60px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 8px;
+      }
+
+      @media (max-width: 991px) {
+        .main {
+          margin-left: 0;
+          padding: 20px;
+        }
+
+        .card-grid,
+        .chart-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="sidebar">
+      <div>
+        <div class="logo">
+          <i class="fas fa-microchip"></i>
+          <span>PCB Defect<br />Detection</span>
+        </div>
+
+        <div class="menu">
+          <a href="{{ url_for('admin_dashboard') }}"><i class="fas fa-chart-line"></i>Dashboard</a>
+          <a href="{{ url_for('admin_manage_user') }}"><i class="fas fa-user"></i>Manage User</a>
+          <a href="{{ url_for('admin_report') }}" class="active"><i class="fas fa-file-alt"></i>Report</a>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="dropdown">
+          <a href="#" data-bs-toggle="dropdown"><img src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img (31).webp" /></a>
+
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/logout">Logout</a></li>
+          </ul>
+        </div>
+
+        <div class="user-info">
+          <div>{{ username }}</div>
+          <div>{{ role }}</div>
+        </div>
+      </div>
+    </div>
+
+    <main class="main">
+      <div class="page-heading" style="margin-bottom: 24px;">
+        <h2 style="margin: 0; font-size: 2rem; font-weight: 800;">Laporan & Analisis</h2>
+        <p style="margin: 8px 0 0; color: #6b7280;">Lihat data riwayat deteksi, analisis kerusakan, dan unduh laporan.</p>
+      </div>
+
+      <div class="card-grid">
+        <div class="card p-4 shadow-sm">
+          <h6>Total PCB Diperiksa</h6>
+          <p class="fs-1 fw-bold">{{ total_detections }}</p>
+        </div>
+        <div class="card p-4 shadow-sm">
+          <h6>Teknisi Terdaftar</h6>
+          <p class="fs-1 fw-bold">{{ total_technicians }}</p>
+        </div>
+        <div class="card p-4 shadow-sm">
+          <h6>Teknisi Aktif</h6>
+          <p class="fs-1 fw-bold">{{ active_technicians }}</p>
+        </div>
+        <div class="card p-4 shadow-sm">
+          <h6>Jenis Cacat Terbanyak</h6>
+          <p class="fs-1 fw-bold">{{ top_defect }}</p>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="card p-4 shadow-sm">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h5>Deteksi Harian</h5>
+              <p class="text-muted mb-0">Trend jumlah pemeriksaan berdasarkan tanggal.</p>
+            </div>
+            <form method="post">
+              <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Unduh Laporan</button>
+            </form>
+          </div>
+          <div style="height: 320px;">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card p-4 shadow-sm">
+          <h5>Distribusi Jenis Cacat</h5>
+          <p class="text-muted">Persentase jenis cacat yang terdeteksi.</p>
+          <div style="height: 320px;">
+            <canvas id="defectChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-4 shadow-sm" style="margin-top: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <div>
+            <h5>Riwayat Deteksi Terbaru</h5>
+            <p class="text-muted mb-0">Tabel menampilkan gambar, tanggal, dan jenis cacat.</p>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover history-table align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Gambar</th>
+                <th>Teknisi</th>
+                <th>Jenis Cacat</th>
+                <th>Akurasi</th>
+                <th>Status</th>
+                <th>Tanggal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in recent_history %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><img src="{{ item.image_path }}" alt="Deteksi" /></td>
+                <td>{{ item.username or 'Unknown' }}</td>
+                <td>{{ item.defect_type }}</td>
+                <td>{{ item.accuracy }}%</td>
+                <td>{{ item.status }}</td>
+                <td>{{ item.created_at }}</td>
+              </tr>
+              {% else %}
+              <tr>
+                <td colspan="7" class="text-center text-muted">Belum ada riwayat deteksi.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('show');
+      }
+
+      const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+      new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+          labels: {{ daily_labels | tojson | safe }},
+          datasets: [{
+            label: 'Jumlah Deteksi',
+            data: {{ daily_values | tojson | safe }},
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.15)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#3b82f6',
+            pointBorderColor: '#ffffff',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      const defectCtx = document.getElementById('defectChart').getContext('2d');
+      new Chart(defectCtx, {
+        type: 'doughnut',
+        data: {
+          labels: {{ defect_labels | tojson | safe }},
+          datasets: [{
+            data: {{ defect_values | tojson | safe }},
+            backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#8b5cf6', '#22c55e', '#0ea5e9'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -18,7 +18,7 @@ DEFECT_TYPES = ['spurious_copper', 'spur', 'mouse_bite', 'missing_hole', 'short'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024
 
-# pastikan folder ada
+# ensure folder exists
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
@@ -82,7 +82,7 @@ def inject_user():
 
 @app.errorhandler(413)
 def request_entity_too_large(error):
-    return render_template('technician/detection.html', error='Ukuran file maksimal 5MB.'), 413
+    return render_template('technician/detection.html', error='File size must be 5MB or less.'), 413
 
 
 # ================= LANDING PAGE =================
@@ -125,7 +125,7 @@ def login():
             else:
                 return redirect('/technician')
         else:
-            return render_template('auth/login.html', error="ID atau password salah.")
+            return render_template('auth/login.html', error="Incorrect ID or password.")
 
     return render_template('auth/login.html')
 
@@ -231,13 +231,13 @@ def admin_manage_user():
 
             if action == 'edit':
                 if not user_id or not user_id.isdigit():
-                    error = 'ID hanya boleh berisi angka.'
+                    error = 'ID must be numeric.'
                 elif not username:
-                    error = 'Username tidak boleh kosong.'
+                    error = 'Username cannot be empty.'
                 elif password and password != confirm_password:
-                    error = 'Password dan konfirmasi tidak cocok.'
+                    error = 'Password and confirmation do not match.'
                 elif password and (not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password)):
-                    error = 'Password harus berisi huruf dan angka.'
+                    error = 'Password must contain letters and numbers.'
                 else:
                     conn = get_db()
                     cursor = conn.cursor()
@@ -254,50 +254,50 @@ def admin_manage_user():
                                 (username, user_id)
                             )
                         conn.commit()
-                        success = 'Karyawan berhasil diperbarui.'
+                        success = 'Technician updated successfully.'
                     except Exception:
                         conn.rollback()
-                        error = 'Terjadi kesalahan saat memperbarui karyawan.'
+                        error = 'An error occurred while updating the technician.'
                     finally:
                         cursor.close()
                         conn.close()
             elif action in ['deactivate', 'activate', 'delete']:
                 if not user_id or not user_id.isdigit():
-                    error = 'ID hanya boleh berisi angka.'
+                    error = 'ID must be numeric.'
                 elif action == 'delete' and str(session.get('user_id')) == user_id:
-                    error = 'Anda tidak dapat menghapus akun yang sedang digunakan.'
+                    error = 'You cannot delete the currently signed-in account.'
                 else:
                     conn = get_db()
                     cursor = conn.cursor()
                     try:
                         if action == 'delete':
                             cursor.execute('DELETE FROM users WHERE id = %s', (user_id,))
-                            success = 'Karyawan berhasil dihapus.'
+                            success = 'Technician deleted successfully.'
                         else:
                             active_value = 0 if action == 'deactivate' else 1
                             cursor.execute('UPDATE users SET active = %s WHERE id = %s', (active_value, user_id))
                             if action == 'deactivate':
-                                success = 'Karyawan berhasil dinonaktifkan.'
+                                success = 'Technician deactivated successfully.'
                             else:
-                                success = 'Karyawan berhasil diaktifkan kembali.'
+                                success = 'Technician reactivated successfully.'
                         conn.commit()
                     except Exception:
                         conn.rollback()
-                        error = 'Terjadi kesalahan saat mengubah status karyawan.'
+                        error = 'An error occurred while changing the technician status.'
                     finally:
                         cursor.close()
                         conn.close()
             else:
                 if not user_id or not user_id.isdigit():
-                    error = 'ID hanya boleh berisi angka.'
+                    error = 'ID must be numeric.'
                 elif not username:
-                    error = 'Username tidak boleh kosong.'
+                    error = 'Username cannot be empty.'
                 elif not password or not confirm_password:
-                    error = 'Password dan konfirmasi wajib diisi.'
+                    error = 'Password and confirmation are required.'
                 elif password != confirm_password:
-                    error = 'Password dan konfirmasi tidak cocok.'
+                    error = 'Password and confirmation do not match.'
                 elif not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password):
-                    error = 'Password harus berisi huruf dan angka.'
+                    error = 'Password must contain letters and numbers.'
                 else:
                     hashed = hashlib.md5(password.encode()).hexdigest()
                     conn = get_db()
@@ -308,13 +308,13 @@ def admin_manage_user():
                             (user_id, username, hashed, 'technician', 1)
                         )
                         conn.commit()
-                        success = 'Karyawan berhasil ditambahkan.'
+                        success = 'Technician added successfully.'
                     except Exception as e:
                         conn.rollback()
                         if 'Duplicate' in str(e) or 'duplicate' in str(e).lower():
-                            error = 'ID sudah ada. Gunakan ID lain.'
+                            error = 'ID already exists. Use another ID.'
                         else:
-                            error = 'Terjadi kesalahan saat menambahkan karyawan.'
+                            error = 'An error occurred while adding the technician.'
                     finally:
                         cursor.close()
                         conn.close()
@@ -344,6 +344,30 @@ def admin_report():
     ensure_active_column()
     ensure_detections_table()
 
+    if request.method == 'POST':
+        selected_period = request.form.get('period', '').strip()
+        selected_date = request.form.get('date', '').strip()
+    else:
+        selected_period = request.args.get('period', '').strip()
+        selected_date = request.args.get('date', '').strip()
+
+    def build_filter_clause(period, date_str):
+        clause = ''
+        params = []
+        if period and date_str:
+            if period == 'weekly':
+                clause = ' AND YEARWEEK(d.created_at, 1) = YEARWEEK(%s, 1)'
+                params = [date_str]
+            elif period == 'monthly':
+                clause = ' AND YEAR(d.created_at) = YEAR(%s) AND MONTH(d.created_at) = MONTH(%s)'
+                params = [date_str, date_str]
+            elif period == 'yearly':
+                clause = ' AND YEAR(d.created_at) = YEAR(%s)'
+                params = [date_str]
+        return clause, params
+
+    filter_clause, filter_params = build_filter_clause(selected_period, selected_date)
+
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     total_detections = 0
@@ -357,7 +381,7 @@ def admin_report():
     recent_history = []
 
     try:
-        cursor.execute('SELECT COUNT(*) AS total FROM detections')
+        cursor.execute('SELECT COUNT(*) AS total FROM detections d WHERE 1=1' + filter_clause, tuple(filter_params))
         total_detections = cursor.fetchone().get('total', 0) or 0
 
         try:
@@ -374,17 +398,17 @@ def admin_report():
             cursor.execute('SELECT COUNT(*) AS total FROM users WHERE active=1')
             active_technicians = cursor.fetchone().get('total', 0) or 0
 
-        cursor.execute('SELECT defect_type, COUNT(*) AS count FROM detections GROUP BY defect_type ORDER BY count DESC LIMIT 1')
+        cursor.execute('SELECT d.defect_type, COUNT(*) AS count FROM detections d WHERE 1=1' + filter_clause + ' GROUP BY d.defect_type ORDER BY count DESC LIMIT 1', tuple(filter_params))
         row = cursor.fetchone()
         if row:
             top_defect = row.get('defect_type', 'N/A') or 'N/A'
 
-        cursor.execute('SELECT DATE(created_at) AS day, COUNT(*) AS count FROM detections GROUP BY DATE(created_at) ORDER BY day ASC')
+        cursor.execute('SELECT DATE(d.created_at) AS day, COUNT(*) AS count FROM detections d WHERE 1=1' + filter_clause + ' GROUP BY DATE(d.created_at) ORDER BY day ASC', tuple(filter_params))
         daily_data = cursor.fetchall()
         daily_labels = [str(r['day']) for r in daily_data]
         daily_values = [int(r['count']) for r in daily_data]
 
-        cursor.execute('SELECT defect_type, COUNT(*) AS count FROM detections GROUP BY defect_type ORDER BY count DESC')
+        cursor.execute('SELECT defect_type, COUNT(*) AS count FROM detections d WHERE 1=1' + filter_clause + ' GROUP BY defect_type ORDER BY count DESC', tuple(filter_params))
         defect_data = cursor.fetchall()
         defect_labels = [r['defect_type'] for r in defect_data]
         defect_values = [int(r['count']) for r in defect_data]
@@ -392,19 +416,31 @@ def admin_report():
         cursor.execute('''SELECT d.id, d.image_path, d.defect_type, d.accuracy, d.status, d.created_at, u.username
                         FROM detections d
                         LEFT JOIN users u ON u.id = d.technician_id
-                        ORDER BY d.created_at DESC LIMIT 15''')
+                        WHERE 1=1''' + filter_clause + ' ORDER BY d.created_at DESC LIMIT 15', tuple(filter_params))
         recent_history = cursor.fetchall()
     finally:
         cursor.close()
         conn.close()
 
     if request.method == 'POST':
-        report_filename = 'laporan_deteksi.csv'
+        report_filename = 'detection_report.csv'
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['ID', 'Teknisi', 'Jenis Cacat', 'Akurasi', 'Status', 'Tanggal', 'Gambar'])
+        writer.writerow(['ID', 'Technician', 'Defect Type', 'Accuracy', 'Status', 'Date', 'Image'])
 
-        for row in recent_history:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        try:
+            cursor.execute('''SELECT d.id, d.image_path, d.defect_type, d.accuracy, d.status, d.created_at, u.username
+                              FROM detections d
+                              LEFT JOIN users u ON u.id = d.technician_id
+                              WHERE 1=1''' + filter_clause + ' ORDER BY d.created_at DESC', tuple(filter_params))
+            download_rows = cursor.fetchall()
+        finally:
+            cursor.close()
+            conn.close()
+
+        for row in download_rows:
             writer.writerow([
                 row.get('id'),
                 row.get('username') or 'Unknown',
@@ -434,7 +470,9 @@ def admin_report():
         daily_values=daily_values,
         defect_labels=defect_labels,
         defect_values=defect_values,
-        recent_history=recent_history
+        recent_history=recent_history,
+        selected_period=selected_period,
+        selected_date=selected_date
     )
 
 
@@ -519,7 +557,7 @@ def technician_detection():
     return redirect('/login')
 
 
-# ================= 🔥 DETEKSI (UPLOAD + HASIL) =================
+# ================= 🔥 DETECTION (UPLOAD + RESULTS) =================
 @app.route('/detect', methods=['POST'])
 def detect():
     if session.get('role') != 'technician':
@@ -539,7 +577,7 @@ def detect():
         # ================= AI MODEL (Sementara Dummy) =================
         result = "missing_hole"
         accuracy = 96.42
-        status = "CACAT"
+        status = "DEFECT"
 
         technician_id = session.get('user_id')
         conn = None
@@ -646,11 +684,11 @@ def technician_report():
         base = 'SELECT id, image_path, defect_type, accuracy, status, created_at FROM detections WHERE technician_id = %s'
         if not period or not date_str:
             return base + ' ORDER BY created_at DESC', (technician_id,)
-        if period == 'Mingguan':
+        if period == 'weekly':
             return base + ' AND YEARWEEK(created_at, 1) = YEARWEEK(%s, 1) ORDER BY created_at DESC', (technician_id, date_str)
-        if period == 'Bulanan':
+        if period == 'monthly':
             return base + ' AND YEAR(created_at) = YEAR(%s) AND MONTH(created_at) = MONTH(%s) ORDER BY created_at DESC', (technician_id, date_str, date_str)
-        if period == 'Tahunan':
+        if period == 'yearly':
             return base + ' AND YEAR(created_at) = YEAR(%s) ORDER BY created_at DESC', (technician_id, date_str)
         return base + ' ORDER BY created_at DESC', (technician_id,)
 
@@ -659,9 +697,9 @@ def technician_report():
         selected_date = request.form.get('date', '').strip()
 
         if not selected_period:
-            error = 'Silakan pilih periode terlebih dahulu'
+            error = 'Please select a period first'
         elif not selected_date:
-            error = 'Silakan pilih tanggal terlebih dahulu'
+            error = 'Please select a date first'
 
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
@@ -681,11 +719,11 @@ def technician_report():
         report_total = total_count
 
         if request.method == 'POST' and not error:
-            report_filename = 'laporan_teknisi.xlsx'
+            report_filename = 'technician_report.xlsx'
             workbook = Workbook()
             worksheet = workbook.active
-            worksheet.title = 'Laporan'
-            worksheet.append(['ID', 'Jenis Cacat', 'Akurasi', 'Status', 'Tanggal', 'Nama File'])
+            worksheet.title = 'Report'
+            worksheet.append(['ID', 'Defect Type', 'Accuracy', 'Status', 'Date', 'File Name'])
             for row in report_rows:
                 worksheet.append([
                     row['id'],
@@ -744,11 +782,11 @@ def change_password():
 
     user = session['username']
 
-    # ambil password lama dari database
+    # get old password from database
     db_user = get_user(user)
 
     if db_user['password'] != hashlib.md5(old.encode()).hexdigest():
-        return render_template('technician/settings.html', error="Password lama salah!")
+        return render_template('technician/settings.html', error="Old password is incorrect!")
 
     update_password(user, new)
 

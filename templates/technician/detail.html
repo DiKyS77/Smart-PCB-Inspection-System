@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Detail Deteksi</title>
+    <title>Detection Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
     <style>
@@ -147,14 +147,14 @@
         </div>
         <div class="menu">
           <a href="{{ url_for('technician_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
-          <a href="{{ url_for('technician_detection') }}"><i class="fas fa-camera"></i> Deteksi</a>
+          <a href="{{ url_for('technician_detection') }}"><i class="fas fa-camera"></i> Detection</a>
           <a href="{{ url_for('technician_history') }}" class="active"><i class="fas fa-clock"></i> History</a>
           <a href="{{ url_for('technician_report') }}"><i class="fas fa-file-alt"></i> Report</a>
         </div>
       </div>
       <div class="sidebar-footer">
         <div>
-          <img src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img (31).webp" alt="User" />
+          <i class="fas fa-user-circle fa-2x" style="color:white"></i>
         </div>
         <div class="user-info">
           <div>{{ username or 'User' }}</div>
@@ -165,24 +165,24 @@
     <div class="main-wrapper">
       <div class="detail-card">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; flex-wrap: wrap;">
-          <a href="{{ url_for('technician_history') }}" class="back-link"><i class="fas fa-arrow-left"></i> Kembali ke History</a>
+          <a href="{{ url_for('technician_history') }}" class="back-link"><i class="fas fa-arrow-left"></i> Back to History</a>
         </div>
-        <h2>Detail Hasil Deteksi</h2>
+        <h2>Detection Details</h2>
         <div class="detail-grid">
           <div class="detail-image">
-            <img src="{{ detection.image_url or 'https://via.placeholder.com/400x300.png?text=No+Image' }}" alt="Deteksi PCB" />
+            <img src="{{ detection.image_url or 'https://via.placeholder.com/400x300.png?text=No+Image' }}" alt="PCB Detection" />
           </div>
           <div class="detail-info">
             <div class="info-row">
-              <strong>Nama File</strong>
-              <span>{{ detection.file_name or 'Tidak tersedia' }}</span>
+              <strong>File Name</strong>
+              <span>{{ detection.file_name or 'Not available' }}</span>
             </div>
             <div class="info-row">
-              <strong>Jenis Cacat</strong>
+              <strong>Defect Type</strong>
               <span>{{ detection.defect_type }}</span>
             </div>
             <div class="info-row">
-              <strong>Akurasi</strong>
+              <strong>Accuracy</strong>
               <span>{{ detection.accuracy }}%</span>
             </div>
             <div class="info-row">
@@ -190,7 +190,7 @@
               <span>{{ detection.status }}</span>
             </div>
             <div class="info-row">
-              <strong>Tanggal</strong>
+              <strong>Date</strong>
               <span>{{ detection.created_at.strftime('%d %B %Y %H:%M:%S') }}</span>
             </div>
           </div>

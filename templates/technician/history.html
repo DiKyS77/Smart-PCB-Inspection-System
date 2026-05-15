@@ -369,7 +369,7 @@
       <!-- USER -->
       <div class="sidebar-footer">
         <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><img src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img (31).webp" /></a>
+          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
 
           <ul class="dropdown-menu">
             <li>
@@ -394,17 +394,17 @@
         <div class="history-header">
           <div class="history-title">
             <h2>History</h2>
-            <p>Daftar semua hasil deteksi yang telah dilakukan</p>
+            <p>List of all detection results performed.</p>
           </div>
           <div class="search-box">
             <i class="fas fa-search"></i>
-            <input type="text" id="searchDefect" placeholder="Cari jenis cacat......" />
+            <input type="text" id="searchDefect" placeholder="Search defect type..." />
           </div>
         </div>
 
         <div class="error-message" id="errorMessage">
           <i class="fas fa-inbox"></i>
-          <p>Data tidak ditemukan</p>
+          <p>No data found</p>
         </div>
 
         <div class="table-responsive" id="tableContainer">
@@ -412,11 +412,11 @@
             <thead>
               <tr>
                 <th>No</th>
-                <th>Gambar</th>
-                <th>Nama File</th>
-                <th>Tanggal</th>
-                <th>Jenis Cacat</th>
-                <th>Aksi</th>
+                <th>Image</th>
+                <th>File Name</th>
+                <th>Date</th>
+                <th>Defect Type</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody id="historyTableBody">
@@ -425,15 +425,15 @@
                 <tr>
                   <td class="no">{{ loop.index }}</td>
                   <td class="gambar"><img src="{{ row.image_url or 'https://via.placeholder.com/60x60.png?text=PCB' }}" alt="PCB" /></td>
-                  <td>{{ row.file_name or 'Tidak tersedia' }}</td>
+                  <td>{{ row.file_name or 'Not available' }}</td>
                   <td>{{ row.created_at.strftime('%d %B %Y') }}<br>{{ row.created_at.strftime('%H:%M:%S') }}</td>
                   <td><span class="defect-badge defect-{{ row.defect_type|replace('_', '-') }}">{{ row.defect_type }}</span></td>
-                  <td><a href="{{ url_for('technician_history_detail', detection_id=row.id) }}" class="btn-detail">Lihat Detail</a></td>
+                  <td><a href="{{ url_for('technician_history_detail', detection_id=row.id) }}" class="btn-detail">View Details</a></td>
                 </tr>
                 {% endfor %}
               {% else %}
                 <tr>
-                  <td colspan="6" style="text-align: center; padding: 24px;">Belum ada histori deteksi.</td>
+                  <td colspan="6" style="text-align: center; padding: 24px;">No detection history available.</td>
                 </tr>
               {% endif %}
             </tbody>
@@ -441,7 +441,7 @@
         </div>
 
         <div class="pagination-wrapper">
-          <div class="pagination-info">Menampilkan 1 sampai 8 dari 24 data</div>
+          <div class="pagination-info">Showing 1 to 8 of 24 records</div>
           <div class="pagination">
             <button><i class="fas fa-chevron-left"></i></button>
             <button class="active">1</button>

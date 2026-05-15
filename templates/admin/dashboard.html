@@ -338,7 +338,7 @@
       <!-- USER -->
       <div class="sidebar-footer">
         <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><img src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img (31).webp" /></a>
+          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
 
           <ul class="dropdown-menu">
             <li>
@@ -358,12 +358,12 @@
     <main>
       <div class="main-header">
         <div class="page-info">
-          <h2>Dashboard Admin</h2>
-          <p>Ringkasan kinerja tim teknisi dan kualitas inspeksi PCB secara real-time.</p>
+          <h2>Admin Dashboard</h2>
+          <p>Real-time overview of technician performance and PCB inspection quality.</p>
         </div>
         <div class="action-buttons">
           <a href="{{ url_for('admin_manage_user') }}" class="btn btn-outline-primary btn-sm">Manage User</a>
-          <a href="{{ url_for('admin_report') }}" class="btn btn-primary btn-sm">Laporan</a>
+          <a href="{{ url_for('admin_report') }}" class="btn btn-primary btn-sm">Report</a>
         </div>
       </div>
 
@@ -371,45 +371,45 @@
         <div class="stat-card">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
             <div>
-              <h6>Total Deteksi PCB</h6>
+              <h6>Total PCB Detections</h6>
               <p class="value">{{ total_detections or 0 }}</p>
             </div>
             <div class="stat-icon bg-blue"><i class="fas fa-magnifying-glass"></i></div>
           </div>
-          <p class="label">Jumlah semua deteksi pada sistem.</p>
+          <p class="label">Total detections across the system.</p>
         </div>
 
         <div class="stat-card">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
             <div>
-              <h6>Teknisi Terdaftar</h6>
+              <h6>Registered Technicians</h6>
               <p class="value">{{ total_technicians or 0 }}</p>
             </div>
             <div class="stat-icon bg-green"><i class="fas fa-users"></i></div>
           </div>
-          <p class="label">Total akun teknisi yang terdaftar.</p>
+          <p class="label">Total registered technician accounts.</p>
         </div>
 
         <div class="stat-card">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
             <div>
-              <h6>Teknisi Aktif</h6>
+              <h6>Active Technicians</h6>
               <p class="value">{{ active_technicians or 0 }}</p>
             </div>
             <div class="stat-icon bg-purple"><i class="fas fa-user-check"></i></div>
           </div>
-          <p class="label">Jumlah teknisi yang aktif saat ini.</p>
+          <p class="label">Number of currently active technicians.</p>
         </div>
 
         <div class="stat-card">
           <div style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
             <div>
-              <h6>Defek Terbanyak</h6>
+              <h6>Top Defect</h6>
               <p class="value">{{ top_defect or 'N/A' }}</p>
             </div>
             <div class="stat-icon bg-orange"><i class="fas fa-bug"></i></div>
           </div>
-          <p class="label">Jenis cacat yang paling sering muncul.</p>
+          <p class="label">Most frequently detected defect type.</p>
         </div>
       </div>
 
@@ -417,8 +417,8 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h5 class="card-title">Tren Deteksi</h5>
-              <p class="card-subtitle">Jumlah deteksi berdasarkan tanggal.</p>
+              <h5 class="card-title">Detection Trend</h5>
+              <p class="card-subtitle">Detection count by date.</p>
             </div>
           </div>
           <div style="height: 320px;">
@@ -429,8 +429,8 @@
         <div class="card">
           <div class="card-header">
             <div>
-              <h5 class="card-title">Distribusi Cacat</h5>
-              <p class="card-subtitle">Komposisi jenis cacat dari seluruh deteksi.</p>
+              <h5 class="card-title">Defect Distribution</h5>
+              <p class="card-subtitle">Defect type composition from all detections.</p>
             </div>
           </div>
           <div style="height: 320px; display: flex; align-items: center; justify-content: center;">
@@ -443,8 +443,8 @@
         <div class="card">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
             <div>
-              <h5 style="margin: 0;">Top 5 Karyawan Aktif</h5>
-              <p style="margin: 6px 0 0 0; color: #6b7280;">Ranking berdasarkan jumlah deteksi.</p>
+              <h5 style="margin: 0;">Top 5 Active Technicians</h5>
+              <p style="margin: 6px 0 0 0; color: #6b7280;">Ranking based on detection count.</p>
             </div>
           </div>
           <div class="top-tech-list">
@@ -452,12 +452,12 @@
             <div class="top-tech-item">
               <div>
                 <p style="margin: 0; font-weight: 700; color: #111827;">{{ tech.username or 'Unknown' }}</p>
-                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.92rem;">{{ tech.total_detections }} deteksi</p>
+                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.92rem;">{{ tech.total_detections }} detections</p>
               </div>
               <span style="background: #eff6ff; color: #1d4ed8; padding: 6px 10px; border-radius: 999px; font-weight: 700; font-size: 0.85rem;">#{{ loop.index }}</span>
             </div>
             {% else %}
-            <div style="color: #6b7280;">Belum ada data teknisi.</div>
+            <div style="color: #6b7280;">No technician data available.</div>
             {% endfor %}
           </div>
         </div>
@@ -465,8 +465,8 @@
         <div class="card">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px;">
             <div>
-              <h5 style="margin: 0;">Aktivitas Terbaru</h5>
-              <p style="margin: 6px 0 0 0; color: #6b7280;">Riwayat deteksi terbaru dari teknisi.</p>
+              <h5 style="margin: 0;">Recent Activity</h5>
+              <p style="margin: 6px 0 0 0; color: #6b7280;">Latest technician detection history.</p>
             </div>
           </div>
           <div class="table-responsive">
@@ -474,11 +474,11 @@
               <thead style="background: #f8fafc;">
                 <tr>
                   <th>No</th>
-                  <th>Teknisi</th>
-                  <th>Jenis Cacat</th>
-                  <th>Akurasi</th>
+                  <th>Technician</th>
+                  <th>Defect Type</th>
+                  <th>Accuracy</th>
                   <th>Status</th>
-                  <th>Tanggal</th>
+                  <th>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -493,7 +493,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                  <td colspan="6" class="text-center text-muted">Belum ada riwayat deteksi.</td>
+                  <td colspan="6" class="text-center text-muted">No detection history available.</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -511,14 +511,14 @@
         document.getElementById('sidebar').classList.toggle('show')
       }
 
-      // Grafik Tren Deteksi (Line Chart)
+      // Detection Trend Chart (Line Chart)
       const trendCtx = document.getElementById('trendChart').getContext('2d');
       new Chart(trendCtx, {
         type: 'line',
         data: {
           labels: {{ daily_labels | tojson | safe }},
           datasets: [{
-            label: 'Jumlah Deteksi',
+            label: 'Detection Count',
             data: {{ daily_values | tojson | safe }},
             borderColor: '#3b82f6',
             backgroundColor: 'rgba(59, 130, 246, 0.12)',
@@ -549,7 +549,7 @@
         }
       });
 
-      // Grafik Distribusi Jenis Cacat (Doughnut Chart)
+      // Defect Distribution Chart (Doughnut Chart)
       const distributionCtx = document.getElementById('distributionChart').getContext('2d');
       new Chart(distributionCtx, {
         type: 'doughnut',

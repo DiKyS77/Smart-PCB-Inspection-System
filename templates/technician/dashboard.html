@@ -422,7 +422,7 @@
       <!-- USER -->
       <div class="sidebar-footer">
         <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><img src="https://mdbcdn.b-cdn.net/img/Photos/Avatars/img (31).webp" /></a>
+          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
 
           <ul class="dropdown-menu">
             <li>
@@ -447,33 +447,33 @@
         <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
         <div class="page-title">
           <h2>Dashboard</h2>
-          <p>Ringkasan umum sistem deteksi cacat PCB</p>
+          <p>Overview of the PCB defect detection system.</p>
         </div>
       </div>
 
       <div class="top-cards">
         <div class="stat-card">
           <div class="icon" style="background: rgba(22, 163, 74, 0.12); color: #16a34a;"><i class="fas fa-chart-line"></i></div>
-          <small>Total Deteksi</small>
+          <small>Total Detections</small>
           <h3>{{ total_detections }}</h3>
-          <small>Semua Waktu</small>
+          <small>All Time</small>
         </div>
         <div class="stat-card">
           <div class="icon" style="background: rgba(59, 130, 246, 0.12); color: #2563eb;"><i class="fas fa-bolt"></i></div>
-          <small>Cacat Terbanyak</small>
+          <small>Top Defect</small>
           <h3>{{ top_defect }}</h3>
-          <small>Semua Waktu</small>
+          <small>All Time</small>
         </div>
         <div class="stat-card">
           <div class="icon" style="background: rgba(239, 68, 68, 0.12); color: #dc2626;"><i class="fas fa-shield-alt"></i></div>
-          <small>Rata-rata Keyakinan</small>
+          <small>Average Confidence</small>
           <h3>{{ avg_accuracy }}%</h3>
-          <small>Rata-rata confidence AI</small>
+          <small>Average AI confidence</small>
         </div>
       </div>
 
       <div class="summary-section">
-        <h5>Ringkasan Jenis Cacat</h5>
+        <h5>Defect Summary</h5>
         <div class="summary-cards">
           {% for item in defect_summary %}
             {% if item.defect_type == 'spurious_copper' %}
@@ -522,8 +522,8 @@
 
       <div class="main-grid">
         <div class="chart-card">
-          <h5>Distribusi Jenis Cacat</h5>
-          <p>Persentase distribusi setiap jenis cacat dari semua hasil deteksi</p>
+          <h5>Defect Distribution</h5>
+          <p>Percentage distribution of each defect type found.</p>
           <div class="chart-figure">
             <div class="chart-wrapper">
               <canvas id="chart"></canvas>
@@ -536,15 +536,15 @@
             <div class="insight-item">
               <div class="icon" style="background: rgba(239, 68, 68, 0.12); color: #dc2626;"><i class="fas fa-arrow-up-right-from-square"></i></div>
               <div>
-                <h6>Cacat paling sering</h6>
-                <span>{{ top_defect }} adalah yang paling sering muncul</span>
+                <h6>Most common defect</h6>
+                <span>{{ top_defect }} is the most common defect</span>
               </div>
             </div>
             <div class="insight-item">
               <div class="icon" style="background: rgba(168, 85, 247, 0.16); color: #8b5cf6;"><i class="fas fa-check-circle"></i></div>
               <div>
-                <h6>Akurasi model stabil</h6>
-                <span>Rata-rata keyakinan model berada di {{ avg_accuracy }}%</span>
+                <h6>Stable model accuracy</h6>
+                <span>Model confidence averages {{ avg_accuracy }}%</span>
               </div>
             </div>
           </div>
@@ -552,15 +552,15 @@
       </div>
 
       <div class="table-card">
-        <h5>Deteksi Terbaru</h5>
+        <h5>Recent Detections</h5>
         <table>
           <thead>
             <tr>
               <th>No.</th>
-              <th>Gambar</th>
-              <th>Nama File</th>
-              <th>Tanggal</th>
-              <th>Jenis Cacat</th>
+              <th>Image</th>
+              <th>File Name</th>
+              <th>Date</th>
+              <th>Defect Type</th>
             </tr>
           </thead>
           <tbody>
@@ -569,14 +569,14 @@
               <tr>
                 <td>{{ loop.index }}</td>
                 <td><img src="{{ detection.image_url or 'https://via.placeholder.com/82x82.png?text=PCB' }}" alt="pcb" /></td>
-                <td>{{ detection.file_name or 'Tidak tersedia' }}</td>
+                <td>{{ detection.file_name or 'Not available' }}</td>
                 <td>{{ detection.created_at.strftime('%d %B %Y') }}<br />{{ detection.created_at.strftime('%H:%M:%S') }}</td>
                 <td><span class="badge {{ 'badge-soft-red' if detection.defect_type == 'spurious_copper' else 'badge-soft-blue' }}">{{ detection.defect_type }}</span></td>
               </tr>
               {% endfor %}
             {% else %}
               <tr>
-                <td colspan="5" style="text-align: center; padding: 24px;">Belum ada deteksi untuk ditampilkan.</td>
+                <td colspan="5" style="text-align: center; padding: 24px;">No detections to display.</td>
               </tr>
             {% endif %}
           </tbody>

@@ -79,7 +79,7 @@
 <nav class="navbar bg-white fixed-top shadow-sm">
   <div class="container-fluid">
     <a href="{{ url_for('technician_dashboard') }}" class="btn btn-link text-decoration-none">
-      <i class="fas fa-arrow-left"></i> Kembali
+      <i class="fas fa-arrow-left"></i> Back
     </a>
   </div>
 </nav>
@@ -91,7 +91,7 @@
       <div class="card-body">
         <div class="mb-4">
           <h4 class="fw-bold">Ubah Password</h4>
-          <p class="text-muted mb-0">Silakan ganti password akun kamu dengan aman.</p>
+          <p class="text-muted mb-0">Please change your account password securely.</p>
         </div>
 
         {% if error %}
@@ -100,21 +100,21 @@
 
         <form action="/change-password" method="POST" onsubmit="return validatePassword()">
           <div class="mb-3">
-            <label class="form-label">Password Lama</label>
+            <label class="form-label">Old Password</label>
             <input type="password" name="old_password" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Password Baru</label>
+            <label class="form-label">New Password</label>
             <input type="password" id="newPass" name="new_password" class="form-control" required>
           </div>
 
           <div class="mb-3">
-            <label class="form-label">Konfirmasi Password</label>
+            <label class="form-label">Confirm Password</label>
             <input type="password" id="confirmPass" class="form-control" required>
           </div>
 
-          <button type="submit" class="btn btn-primary w-100">Simpan Password</button>
+          <button type="submit" class="btn btn-primary w-100">Save Password</button>
         </form>
       </div>
     </div>
@@ -127,7 +127,7 @@ function validatePassword() {
   const confirmPass = document.getElementById('confirmPass').value
 
   if (newPass.length < 6) {
-    alert('Password minimal 6 karakter!')
+    alert('Password must be at least 6 characters!')
     return false
   }
 
@@ -135,12 +135,12 @@ function validatePassword() {
   const hasNumbers = /[0-9]/.test(newPass)
 
   if (!hasLetters || !hasNumbers) {
-    alert('Password harus mengandung huruf dan angka!')
+    alert('Password must contain letters and numbers!')
     return false
   }
 
   if (newPass !== confirmPass) {
-    alert('Konfirmasi password tidak sama!')
+    alert('Password confirmation does not match!')
     return false
   }
 

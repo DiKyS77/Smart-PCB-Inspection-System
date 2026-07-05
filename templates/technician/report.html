@@ -1,633 +1,952 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-
-    <style>
-      body {
-        background: #eef3fb;
-        min-height: 100vh;
-      }
-
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: 240px;
-        background: #1f2558;
-        color: #eef3fb;
-        padding: 28px 22px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-      }
-
-      .sidebar .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 26px;
-        font-weight: 700;
-      }
-
-      .sidebar .logo i {
-        background: #37d08f;
-        color: #0f172a;
-        padding: 10px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-      }
-
-      .sidebar .logo span {
-        line-height: 1.1;
-      }
-
-      .sidebar .menu a {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: #d6d8ef;
-        padding: 12px 14px;
-        border-radius: 14px;
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: 0.2s ease;
-      }
-
-      .sidebar .menu a:hover,
-      .sidebar .menu a.active {
-        background: rgba(255, 255, 255, 0.08);
-        color: #ffffff;
-      }
-
-      .sidebar .menu a.active {
-        border-left: 3px solid #37d08f;
-      }
-
-      .sidebar-footer {
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .sidebar-footer img {
-        width: 38px;
-        border-radius: 50%;
-      }
-
-      .sidebar-footer .user-info {
-        font-size: 12px;
-      }
-
-      .sidebar-footer .user-info .role {
-        color: #9ca3af;
-      }
-
-      .main-content {
-        margin-left: 240px;
-        padding: 28px 30px 32px;
-      }
-
-      .page-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 24px;
-        padding-bottom: 16px;
-        border-bottom: 2px solid #e5e7eb;
-        flex-wrap: wrap;
-      }
-
-      .page-header .menu-toggle {
-        display: none;
-        background: none;
-        border: none;
-        font-size: 1.5rem;
-        cursor: pointer;
-        color: #111827;
-      }
-
-      .page-header .report-header {
-        margin-bottom: 0;
-      }
-
-      .page-title h2 {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 800;
-      }
-
-      .page-title p {
-        margin: 6px 0 0;
-        color: #6b7280;
-      }
-
-      .report-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 18px;
-        margin-bottom: 24px;
-      }
-
-      .report-title {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-
-      .report-title h1 {
-        margin: 0;
-        font-size: 2rem;
-        font-weight: 800;
-      }
-
-      .report-title p {
-        margin: 0;
-        color: #6b7280;
-      }
-
-      .report-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: nowrap;
-      }
-
-      .report-actions .input-group {
-        flex: 0 0 220px;
-      }
-
-      .report-actions .form-select,
-      .report-actions .btn {
-        height: 46px;
-      }
-
-      .report-actions .btn {
-        min-width: 180px;
-        white-space: nowrap;
-      }
-
-      .summary-cards {
-        display: flex;
-        gap: 18px;
-        overflow-x: auto;
-        padding-bottom: 4px;
-        margin-bottom: 26px;
-        -webkit-overflow-scrolling: touch;
-      }
-
-      .summary-cards::-webkit-scrollbar {
-        height: 8px;
-      }
-
-      .summary-cards::-webkit-scrollbar-thumb {
-        background: rgba(15, 23, 42, 0.18);
-        border-radius: 999px;
-      }
-
-      .summary-card {
-        min-width: 280px;
-        flex: 0 0 auto;
-        background: #ffffff;
-        border-radius: 22px;
-        padding: 22px 20px;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
-      }
-
-      .summary-card .icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 18px;
-      }
-
-      .summary-card h5 {
-        margin: 0 0 8px;
-        font-size: 1rem;
-        text-transform: capitalize;
-      }
-
-      .summary-card .value {
-        font-size: 2rem;
-        font-weight: 800;
-        margin-bottom: 8px;
-      }
-
-      .summary-card .subtext {
-        color: #6b7280;
-        font-size: 0.95rem;
-      }
-
-      .report-chart {
-        display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 22px;
-        margin-bottom: 24px;
-      }
-
-      .report-chart .chart-card,
-      .report-chart .legend-card,
-      .report-chart .table-card,
-      .report-chart .table-card-two {
-        background: #ffffff;
-        border-radius: 24px;
-        padding: 28px;
-        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
-      }
-
-      .chart-card h5,
-      .legend-card h5,
-      .table-card h5 {
-        margin-bottom: 18px;
-        font-weight: 700;
-      }
-
-      .chart-card .chart-meta {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 22px;
-      }
-
-      .chart-card .chart-meta .label {
-        color: #6b7280;
-      }
-
-      .legend-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: grid;
-        gap: 14px;
-      }
-
-      .legend-item {
-        display: grid;
-        grid-template-columns: 18px 1fr auto;
-        gap: 10px;
-        align-items: center;
-      }
-
-      .legend-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-      }
-
-      .legend-item span {
-        color: #1f2937;
-        font-weight: 600;
-      }
-
-      .legend-item small {
-        color: #6b7280;
-      }
-
-      .legend-badge {
-        display: inline-flex;
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        margin-right: 10px;
-      }
-
-      .legend-table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      .legend-table th,
-      .legend-table td {
-        padding: 12px 14px;
-        border-bottom: 1px solid #e5e7eb;
-      }
-
-      .legend-table th {
-        color: #6b7280;
-        font-weight: 700;
-        text-align: left;
-      }
-
-      .legend-table td .badge {
-        font-size: 0.75rem;
-        padding: 0.55em 0.8em;
-        border-radius: 999px;
-      }
-
-      .table-card-two {
-        margin-top: 24px;
-      }
-
-      .table-card-two table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      .table-card-two th,
-      .table-card-two td {
-        padding: 14px 16px;
-        border-bottom: 1px solid #e5e7eb;
-      }
-
-      .table-card-two th {
-        color: #6b7280;
-        font-weight: 700;
-        text-align: left;
-      }
-
-      .table-card-two td img {
-        width: 72px;
-        border-radius: 10px;
-      }
-
-      .table-card-two td .badge {
-        font-size: 0.75rem;
-      }
-
-      @media (max-width: 1199px) {
-        .report-chart {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      @media (max-width: 767px) {
-        .main-content {
-          margin-left: 0;
-          padding: 18px;
-        }
-
-        .sidebar {
-          position: relative;
-          width: 100%;
-          height: auto;
-        }
-
-        .page-header .menu-toggle {
-          display: block;
-        }
-
-        .report-header {
-          flex-direction: column;
-          align-items: stretch;
-        }
-
-        .summary-cards {
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="sidebar">
-      <div>
-        <div class="logo">
-          <i class="fas fa-microchip"></i>
-          <span>PCB Defect<br />Detection</span>
-        </div>
-
-        <div class="menu">
-          <a href="{{ url_for('technician_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
-          <a href="{{ url_for('technician_detection') }}"><i class="fas fa-camera"></i> Detection</a>
-          <a href="{{ url_for('technician_history') }}"><i class="fas fa-clock"></i> History</a>
-          <a href="{{ url_for('technician_report') }}" class="active"><i class="fas fa-file-alt"></i> Report</a>
-        </div>
-      </div>
-
-      <div class="sidebar-footer">
-        <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="{{ url_for('technician_settings') }}">Settings</a></li>
-            <li><a class="dropdown-item" href="/logout">Logout</a></li>
-          </ul>
-        </div>
-        <div class="user-info">
-          <div>{{ username or 'User' }}</div>
-          <div class="role">{{ role or 'Technician' }}</div>
-        </div>
-      </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report — PCB Defect Detection</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #eef3fb;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 240px;
+      background: #1f2558;
+      color: #eef3fb;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 22px;
+      z-index: 100;
+    }
+
+    .sidebar .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    .sidebar .logo i {
+      background: #37d08f;
+      color: #0f172a;
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar .menu a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #d6d8ef;
+      padding: 11px 14px;
+      border-radius: 12px;
+      text-decoration: none;
+      margin-bottom: 6px;
+      font-size: 0.9rem;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
+
+    .sidebar .menu a.active {
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      border-left: 3px solid #37d08f;
+      padding-left: 11px;
+    }
+
+    .sidebar-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .user-info { font-size: 12px; line-height: 1.5; }
+
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main {
+      margin-left: 240px;
+      padding: 32px 32px 48px;
+    }
+
+    .page-heading { margin-bottom: 28px; }
+    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
+    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
+
+    /* ── PANEL ───────────────────────────────────────────────── */
+    .panel {
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 28px;
+      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+      margin-bottom: 24px;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .panel-header .icon-badge {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+    }
+
+    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
+
+    /* ── FILTER BAR ──────────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .filter-field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .filter-field input[type="date"] {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-size: 0.86rem;
+      color: #1e293b;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .filter-field input[type="date"]:focus {
+      border-color: #1f2558;
+      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
+    }
+
+    .btn-act {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-act:hover { opacity: 0.85; }
+    .btn-act.primary { background: #1f2558; color: #fff; }
+    .btn-act.ghost   { background: #f1f5f9; color: #1f2558; border: 1px solid #e2e8f0; }
+    .btn-act.green   { background: #37d08f; color: #0f172a; }
+
+    /* Filter chips */
+    .filter-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      background: rgba(31,37,88,0.07);
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #1f2558;
+    }
+
+    .filter-chip a { color: #94a3b8; text-decoration: none; }
+    .filter-chip a:hover { color: #ef4444; }
+
+    /* ── SUMMARY CARDS ───────────────────────────────────────── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .summary-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
+
+    .summary-label {
+      font-size: 0.73rem;
+      color: #6b7280;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 3px;
+    }
+
+    .summary-value {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      line-height: 1;
+    }
+
+    .summary-sub {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 3px;
+    }
+
+    /* ── CHARTS GRID ─────────────────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .chart-box { height: 260px; }
+
+    /* Defect legend list */
+    .defect-legend { list-style: none; padding: 0; margin: 0; }
+
+    .defect-legend li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f8fafc;
+      font-size: 0.86rem;
+    }
+
+    .defect-legend li:last-child { border-bottom: none; }
+
+    .defect-legend .leg-left {
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .leg-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%; flex-shrink: 0;
+    }
+
+    .leg-name { font-weight: 600; color: #1e293b; }
+
+    .leg-right {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .leg-count {
+      font-weight: 700; color: #1e293b; font-size: 0.88rem;
+    }
+
+    .leg-pct {
+      font-size: 0.75rem; color: #94a3b8;
+      min-width: 38px; text-align: right;
+    }
+
+    /* Mini bar */
+    .leg-bar-wrap { width: 60px; }
+    .leg-bar-track {
+      height: 5px; border-radius: 999px;
+      background: #f1f5f9; overflow: hidden;
+    }
+    .leg-bar-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #37d08f, #1f2558);
+    }
+
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .report-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .report-table thead tr { border-bottom: 2px solid #f1f5f9; }
+
+    .report-table th {
+      padding: 11px 14px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      text-align: left;
+    }
+
+    .report-table tbody tr {
+      border-bottom: 1px solid #f8fafc;
+      transition: background 0.1s;
+    }
+
+    .report-table tbody tr:hover { background: #f8fafc; }
+
+    .report-table td {
+      padding: 13px 14px;
+      font-size: 0.86rem;
+      color: #374151;
+      vertical-align: middle;
+    }
+
+    /* Thumbnail */
+    .td-thumb {
+      width: 64px; height: 46px;
+      object-fit: contain;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #0f172a;
+      display: block;
+    }
+
+    .td-thumb-empty {
+      width: 64px; height: 46px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      color: #cbd5e1; font-size: 1rem;
+    }
+
+    /* Defect badges — consistent with other pages */
+    .defect-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
+    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
+    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
+    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
+    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
+    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
+    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
+
+    /* Status pill */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+
+    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
+    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
+
+    /* Accuracy bar */
+    .acc-wrap { min-width: 70px; }
+    .acc-num  { font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
+    .acc-track {
+      height: 5px; border-radius: 999px;
+      background: #e5e7eb; overflow: hidden;
+    }
+    .acc-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #37d08f, #1f2558);
+    }
+
+    /* Empty state */
+    .empty-row td {
+      text-align: center; padding: 44px; color: #94a3b8;
+    }
+
+    /* Pagination */
+    .pag-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9;
+      font-size: 0.82rem; color: #6b7280;
+      flex-wrap: wrap; gap: 10px;
+    }
+
+    .pag-btns { display: flex; gap: 5px; }
+
+    .pag-btn {
+      width: 32px; height: 32px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      background: #fff; color: #374151;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .pag-btn:hover  { border-color: #1f2558; color: #1f2558; }
+    .pag-btn.active { background: #1f2558; color: #fff; border-color: #1f2558; }
+    .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .charts-grid  { grid-template-columns: 1fr; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 767px) {
+      .sidebar { display: none; }
+      .main    { margin-left: 0; padding: 20px 16px 40px; }
+      .summary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════════════════════ -->
+<div class="sidebar">
+  <div>
+    <div class="logo">
+      <i class="fas fa-microchip"></i>
+      <span>PCB Defect<br>Detection</span>
     </div>
+    <div class="menu">
+      <a href="{{ url_for('technician_dashboard') }}">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="{{ url_for('technician_detection') }}">
+        <i class="fas fa-camera"></i> Detection
+      </a>
+      <a href="{{ url_for('technician_history') }}">
+        <i class="fas fa-clock"></i> History
+      </a>
+      <a href="{{ url_for('technician_report') }}" class="active">
+        <i class="fas fa-file-alt"></i> Report
+      </a>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="dropdown">
+      <a href="#" data-bs-toggle="dropdown">
+        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li>
+          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">
+            Settings
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="/logout">Logout</a>
+        </li>
+      </ul>
+    </div>
+    <div class="user-info">
+      <div style="font-weight:600">{{ username or 'User' }}</div>
+      <div style="color:#94a3b8">{{ role or 'Technician' }}</div>
+    </div>
+  </div>
+</div>
 
-    <main class="main-content">
-      <div class="page-header">
+<!-- ══════════════════════════════════════════════════════════════
+     MAIN
+══════════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <div class="page-heading">
+    <h2>Report</h2>
+    <p>Statistics and summary of PCB defect detection results.</p>
+  </div>
+
+  <!-- ══ 1. FILTER + DOWNLOAD ════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header" style="flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:160px">
+        <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
+          <i class="fas fa-filter"></i>
+        </div>
         <div>
-          <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-          <div class="page-title">
-            <h2>Report</h2>
-            <p>Statistics and summary of PCB defect detection results.</p>
-          </div>
-        </div>
-        <div class="report-header">
-          <form id="downloadReportForm" action="{{ url_for('technician_report') }}" method="post" class="report-actions">
-            <div class="input-group" style="min-width: 180px;">
-              <select class="form-select" name="period" aria-label="Report period">
-                <option value="" {% if not selected_period %}selected{% endif %}>Select period</option>
-                <option value="weekly" {% if selected_period == 'weekly' %}selected{% endif %}>Weekly</option>
-                <option value="monthly" {% if selected_period == 'monthly' %}selected{% endif %}>Monthly</option>
-                <option value="yearly" {% if selected_period == 'yearly' %}selected{% endif %}>Yearly</option>
-              </select>
-            </div>
-
-            <div class="input-group" style="min-width: 220px;">
-              <input type="date" class="form-control" name="date" aria-label="Report date" value="{{ selected_date }}" />
-            </div>
-
-            <button class="btn btn-primary">Download Report</button>
-          </form>
-
-          <div class="mt-3">
-            <div id="downloadErrorAlert" class="alert alert-danger {% if not error %}d-none{% endif %}">{{ error or '' }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="summary-cards">
-        {% for item in defect_summary %}
-        <div class="summary-card">
-          <div class="icon" style="background: rgba(251, 113, 133, 0.16); color: #ef4444;"> <i class="fas fa-bug"></i> </div>
-          <h5>{{ item.defect_type }}</h5>
-          <div class="value">{{ item.count }}</div>
-          <div class="subtext text-danger">{{ item.percent }}%</div>
-        </div>
-        {% endfor %}
-      </div>
-
-      <div class="report-chart">
-        <div class="chart-card">
-          <div class="chart-meta">
-            <div>
-              <h5>Defect Distribution</h5>
-              <p class="label">Percentage distribution of each defect type.</p>
-            </div>
-            <span class="badge bg-secondary">Total {{ report_total }}</span>
-          </div>
-          <div style="display: flex; align-items: center; justify-content: center;">
-            <div style="width: 300px; height: 300px; position: relative;">
-              <canvas id="reportChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="legend-card">
-          <h5>Defect Type</h5>
-          <table class="legend-table">
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Count</th>
-              </tr>
-            </thead>
-            <tbody>
-            {% for item in defect_summary %}
-              <tr>
-                <td><span class="legend-badge" style="background: {{ '#ef4444' if item.defect_type == 'spurious_copper' else '#f97316' if item.defect_type == 'spur' else '#3b82f6' if item.defect_type == 'mouse_bite' else '#8b5cf6' if item.defect_type == 'short' else '#22c55e' if item.defect_type == 'missing_hole' else '#0ea5e9' }}"></span>{{ item.defect_type }}</td>
-                <td>{{ item.count }} ({{ item.percent }}%)</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        </div>
-      </div>
-
-      <div class="table-card">
-        <h5>Total Defects by Type</h5>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>Defect Type</th>
-                <th>Total</th>
-                <th>Percentage</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for item in defect_summary %}
-              <tr>
-                <td>{{ item.defect_type }}</td>
-                <td>{{ item.count }}</td>
-                <td>{{ item.percent }}%</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div class="table-card-two">
-        <h5>Latest Detections</h5>
-        <div class="table-responsive">
-          <table class="table align-middle">
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Image</th>
-                <th>File Name</th>
-                <th>Date</th>
-                <th>Defect Type</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% if report_rows %}
-                {% for row in report_rows[:6] %}
-                <tr>
-                  <td>{{ loop.index }}</td>
-                  <td><img src="{{ row.image_url or 'https://via.placeholder.com/72x72.png?text=PCB' }}" alt="pcb" /></td>
-                  <td>{{ row.file_name or 'Not available' }}</td>
-                  <td>{{ row.created_at.strftime('%d %B %Y') }}<br />{{ row.created_at.strftime('%H:%M:%S') }}</td>
-                  <td><span class="badge bg-{{ 'danger' if row.defect_type == 'spurious_copper' else 'primary' if row.defect_type == 'mouse_bite' else 'warning' if row.defect_type == 'spur' else 'info' }}">{{ row.defect_type }}</span></td>
-                </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="5" style="text-align: center; padding: 24px;">No report data for this period.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
+          <h5>Filter Report</h5>
+          <p>Select date range to narrow down results</p>
         </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      const ctx = document.getElementById('reportChart');
-      const reportLabels = {{ defect_labels|tojson }};
-      const reportValues = {{ defect_values|tojson }};
-      new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: reportLabels,
-          datasets: [{
-            data: reportValues,
-            backgroundColor: ['#ef4444', '#f97316', '#3b82f6', '#8b5cf6', '#22c55e', '#0ea5e9'],
-            borderWidth: 0
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          cutout: '70%',
-          plugins: {
-            legend: { display: false }
+    <!--
+      SATU form untuk filter DAN export — bedanya hanya pada button name.
+      app.py cek: request.form.get('export') → download XLSX
+      Jika tombol Filter ditekan: name="filter", bukan "export" → hanya filter
+    -->
+    <form method="post" id="reportForm" novalidate>
+
+      <div class="filter-bar mb-3">
+        <div class="filter-field">
+          <label>From</label>
+          <input type="date" name="start_date"
+                 id="startDate"
+                 value="{{ start_date }}" />
+        </div>
+        <div class="filter-field">
+          <label>To</label>
+          <input type="date" name="end_date"
+                 id="endDate"
+                 value="{{ end_date }}" />
+        </div>
+
+        <!-- FIX: name="filter" → backend tidak anggap ini sebagai export request -->
+        <button type="submit" name="filter" value="1" class="btn-act primary">
+          <i class="fas fa-filter"></i> Filter
+        </button>
+
+        <!-- FIX: name="export" value="1" → app.py cek request.form.get('export') -->
+        <button type="submit" name="export" value="1" class="btn-act green" id="exportBtn">
+          <i class="fas fa-download"></i> Download XLSX
+        </button>
+
+        {% if start_date or end_date %}
+        <a href="{{ url_for('technician_report') }}" class="btn-act ghost">
+          <i class="fas fa-times"></i> Reset
+        </a>
+        {% endif %}
+      </div>
+
+      <!-- Error dari backend (validasi tanggal) -->
+      {% if error %}
+      <div class="alert alert-danger d-flex align-items-center gap-2 mb-0"
+           style="border-radius:10px;font-size:0.86rem">
+        <i class="fas fa-exclamation-circle"></i>
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <!-- Error dari JS (sebelum submit) -->
+      <div id="jsError"
+           class="alert alert-danger d-flex align-items-center gap-2 mb-0 d-none"
+           style="border-radius:10px;font-size:0.86rem">
+        <i class="fas fa-exclamation-circle"></i>
+        <span id="jsErrorMsg"></span>
+      </div>
+    </form>
+
+    <!-- Active filter chips -->
+    {% if start_date or end_date %}
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      {% if start_date %}
+      <span class="filter-chip">
+        <i class="fas fa-calendar-day"></i>
+        From: {{ start_date }}
+        <a href="{{ url_for('technician_report') }}?end_date={{ end_date }}">✕</a>
+      </span>
+      {% endif %}
+      {% if end_date %}
+      <span class="filter-chip">
+        <i class="fas fa-calendar-day"></i>
+        To: {{ end_date }}
+        <a href="{{ url_for('technician_report') }}?start_date={{ start_date }}">✕</a>
+      </span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══ 2. SUMMARY CARDS ═════════════════════════════════════ -->
+  {% if defect_summary %}
+  <div class="summary-grid">
+    {% set palette = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'] %}
+    {% for item in defect_summary %}
+    {% if item.count > 0 %}
+    <div class="summary-card">
+      <div class="summary-icon"
+           style="background:{{ palette[loop.index0 % 6] }}20;
+                  color:{{ palette[loop.index0 % 6] }}">
+        <i class="fas fa-bug"></i>
+      </div>
+      <div>
+        <div class="summary-label">{{ item.defect_type | replace('_',' ') }}</div>
+        <div class="summary-value">{{ item.count }}</div>
+        <div class="summary-sub">{{ item.percent }}% of total detections</div>
+      </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- ══ 3. CHARTS + LEGEND ════════════════════════════════════ -->
+  <div class="charts-grid">
+
+    <!-- Doughnut chart -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="icon-badge" style="background:#fef2f2;color:#dc2626">
+          <i class="fas fa-chart-pie"></i>
+        </div>
+        <div>
+          <h5>Defect Distribution</h5>
+          <p>Proportion of each defect type — total {{ report_total }} detections</p>
+        </div>
+      </div>
+
+      {% if report_total > 0 %}
+      <div style="display:flex;align-items:center;justify-content:center">
+        <div class="chart-box" style="width:260px">
+          <canvas id="reportChart"></canvas>
+        </div>
+      </div>
+      {% else %}
+      <div style="text-align:center;padding:40px;color:#94a3b8">
+        <i class="fas fa-chart-pie"
+           style="font-size:2.5rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
+        No data for the selected period.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Defect legend / breakdown -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="icon-badge" style="background:#f5f3ff;color:#7c3aed">
+          <i class="fas fa-list"></i>
+        </div>
+        <div>
+          <h5>Defect Breakdown</h5>
+          <p>Count and percentage per type</p>
+        </div>
+      </div>
+
+      {% set palette = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'] %}
+      <ul class="defect-legend">
+        {% for item in defect_summary %}
+        <li>
+          <div class="leg-left">
+            <span class="leg-dot"
+                  style="background:{{ palette[loop.index0 % 6] }}"></span>
+            <span class="leg-name">{{ item.defect_type | replace('_',' ') }}</span>
+          </div>
+          <div class="leg-right">
+            <div class="leg-bar-wrap">
+              <div class="leg-bar-track">
+                <div class="leg-bar-fill"
+                     style="width:{{ item.percent }}%;
+                            background:{{ palette[loop.index0 % 6] }}"></div>
+              </div>
+            </div>
+            <span class="leg-count">{{ item.count }}</span>
+            <span class="leg-pct">{{ item.percent }}%</span>
+          </div>
+        </li>
+        {% else %}
+        <li style="color:#94a3b8;justify-content:center;padding:24px 0">
+          No defect data available.
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ 4. DETECTION LOG TABLE ════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header" style="flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px;flex:1">
+        <div class="icon-badge" style="background:#f0fdf4;color:#16a34a">
+          <i class="fas fa-table"></i>
+        </div>
+        <div>
+          <h5>Detection Log</h5>
+          <p>
+            {% if start_date and end_date %}
+              {{ start_date }} — {{ end_date }}
+            {% elif start_date %}
+              From {{ start_date }}
+            {% elif end_date %}
+              Until {{ end_date }}
+            {% else %}
+              All detections
+            {% endif %}
+            &nbsp;·&nbsp; {{ report_total }} record{{ 's' if report_total != 1 }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Image</th>
+            <th>File Name</th>
+            <th>Date &amp; Time</th>
+            <th>Defect Type</th>
+            <th>Accuracy</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% if report_rows %}
+            {% for row in report_rows %}
+            <tr>
+              <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+
+              <td>
+                {# FIX: pakai row.image_url (sudah diproses get_image_url di backend)
+                         bukan row.image_path mentah #}
+                {% if row.image_url %}
+                  <img class="td-thumb"
+                       src="{{ row.image_url }}"
+                       alt="{{ row.defect_type }}" />
+                {% else %}
+                  <div class="td-thumb-empty">
+                    <i class="fas fa-image"></i>
+                  </div>
+                {% endif %}
+              </td>
+
+              <td style="font-size:0.8rem;color:#6b7280;
+                         max-width:120px;overflow:hidden;
+                         text-overflow:ellipsis;white-space:nowrap"
+                  title="{{ row.file_name or '-' }}">
+                {{ row.file_name or 'N/A' }}
+              </td>
+
+              <td>
+                <div style="font-size:0.85rem;font-weight:600">
+                  {{ row.created_at.strftime('%d %b %Y') }}
+                </div>
+                <div style="font-size:0.76rem;color:#94a3b8">
+                  {{ row.created_at.strftime('%H:%M:%S') }}
+                </div>
+              </td>
+
+              <td>
+                {# FIX: custom defect-badge konsisten dengan halaman lain #}
+                <span class="defect-badge
+                  defect-{{ (row.defect_type or 'no-defect') | replace('_','-') }}">
+                  {{ row.defect_type or 'No Defect' }}
+                </span>
+              </td>
+
+              <td>
+                <div class="acc-wrap">
+                  <div class="acc-num">{{ row.accuracy }}%</div>
+                  <div class="acc-track">
+                    <div class="acc-fill" style="width:{{ row.accuracy }}%"></div>
+                  </div>
+                </div>
+              </td>
+
+              <td>
+                <span class="status-pill
+                  {{ 'defect' if row.status == 'DEFECT' else 'normal' }}">
+                  <i class="fas fa-{{ 'exclamation-circle'
+                     if row.status == 'DEFECT' else 'check-circle' }}"></i>
+                  {{ row.status or 'NORMAL' }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr class="empty-row">
+              <td colspan="7">
+                <i class="fas fa-inbox"
+                   style="display:block;font-size:2.5rem;
+                          margin-bottom:10px;color:#cbd5e1"></i>
+                No detection records found
+                {% if start_date or end_date %}
+                  for the selected date range.
+                {% else %}
+                  yet.
+                {% endif %}
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Client-side pagination -->
+    <div class="pag-row">
+      <span id="pagInfo"></span>
+      <div class="pag-btns" id="pagBtns"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  /* ── DOUGHNUT CHART ──────────────────────────────────────── */
+  const PALETTE = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'];
+
+  const chartEl = document.getElementById('reportChart');
+  if (chartEl) {
+    new Chart(chartEl, {
+      type: 'doughnut',
+      data: {
+        labels:   {{ defect_labels | tojson | safe }},
+        datasets: [{
+          data:            {{ defect_values | tojson | safe }},
+          backgroundColor: PALETTE,
+          borderWidth:     0,
+          hoverOffset:     6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: {
+            display: false   // legend ditampilkan custom di panel sebelah
+          },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed} (${
+                Math.round(ctx.parsed / ctx.dataset.data.reduce((a,b)=>a+b,0) * 100)
+              }%)`
+            }
           }
         }
-      });
-
-      const downloadForm = document.getElementById('downloadReportForm');
-      const periodSelect = downloadForm.querySelector('select[name="period"]');
-      const dateInput = downloadForm.querySelector('input[name="date"]');
-      const errorAlert = document.getElementById('downloadErrorAlert');
-
-      function updateErrorVisibility() {
-        if (!periodSelect.value || !dateInput.value) {
-          return;
-        }
-
-        errorAlert.classList.add('d-none');
-        errorAlert.textContent = '';
       }
+    });
+  }
 
-      periodSelect.addEventListener('change', updateErrorVisibility);
-      dateInput.addEventListener('change', updateErrorVisibility);
+  /* ── FORM VALIDATION (JS — client side) ──────────────────── */
+  const form      = document.getElementById('reportForm');
+  const startDate = document.getElementById('startDate');
+  const endDate   = document.getElementById('endDate');
+  const jsError   = document.getElementById('jsError');
+  const jsErrMsg  = document.getElementById('jsErrorMsg');
+  const exportBtn = document.getElementById('exportBtn');
 
-      downloadForm.addEventListener('submit', function (event) {
-        if (!periodSelect.value) {
-          event.preventDefault();
-          errorAlert.textContent = 'Please select a period first';
-          errorAlert.classList.remove('d-none');
-          return;
-        }
+  function showJsError(msg) {
+    jsErrMsg.textContent = msg;
+    jsError.classList.remove('d-none');
+  }
 
-        if (!dateInput.value) {
-          event.preventDefault();
-          errorAlert.textContent = 'Please select a date first';
-          errorAlert.classList.remove('d-none');
-          return;
-        }
+  function hideJsError() {
+    jsError.classList.add('d-none');
+  }
 
-        errorAlert.classList.add('d-none');
-        errorAlert.textContent = '';
-      });
+  [startDate, endDate].forEach(el => el.addEventListener('change', hideJsError));
 
-      function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('show');
+  form.addEventListener('submit', function(e) {
+    const clickedName = document.activeElement?.name;
+    const noDate = !startDate.value && !endDate.value;
+
+    if (noDate) {
+      e.preventDefault();
+      showJsError('Please select a start date or end date before submitting.');
+      return;
+    }
+
+    // Extra check: if exporting, inform user the data will download
+    if (clickedName === 'export' && !startDate.value && !endDate.value) {
+      e.preventDefault();
+      showJsError('Select a date range before downloading the report.');
+    }
+  });
+
+  /* ── PAGINATION ──────────────────────────────────────────── */
+  const PER_PAGE = 10;
+  let currentPage = 1;
+
+  function getRows() {
+    return Array.from(
+      document.querySelectorAll('#tableBody tr:not(.empty-row)')
+    );
+  }
+
+  function renderPagination() {
+    const rows  = getRows();
+    const total = rows.length;
+    if (total === 0) return;
+
+    const pages = Math.ceil(total / PER_PAGE);
+    const start = (currentPage - 1) * PER_PAGE;
+    const end   = Math.min(start + PER_PAGE, total);
+
+    rows.forEach((r, i) => {
+      r.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    document.getElementById('pagInfo').textContent =
+      `Showing ${start + 1}–${end} of ${total} records`;
+
+    const btns = document.getElementById('pagBtns');
+    btns.innerHTML = '';
+
+    const prev     = document.createElement('button');
+    prev.className = 'pag-btn';
+    prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prev.disabled  = currentPage === 1;
+    prev.onclick   = () => { currentPage--; renderPagination(); };
+    btns.appendChild(prev);
+
+    const WING = 2;
+    for (let p = 1; p <= pages; p++) {
+      if (
+        p === 1 || p === pages ||
+        (p >= currentPage - WING && p <= currentPage + WING)
+      ) {
+        const b = document.createElement('button');
+        b.className   = 'pag-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = p;
+        b.onclick = (() => {
+          const pg = p;
+          return () => { currentPage = pg; renderPagination(); };
+        })();
+        btns.appendChild(b);
+      } else if (
+        p === currentPage - WING - 1 ||
+        p === currentPage + WING + 1
+      ) {
+        const d = document.createElement('span');
+        d.textContent = '…';
+        d.style.cssText =
+          'padding:0 4px;color:#94a3b8;font-size:0.82rem;display:flex;align-items:center';
+        btns.appendChild(d);
       }
-    </script>
-  </body>
+    }
+
+    const next     = document.createElement('button');
+    next.className = 'pag-btn';
+    next.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    next.disabled  = currentPage >= pages;
+    next.onclick   = () => { currentPage++; renderPagination(); };
+    btns.appendChild(next);
+  }
+
+  renderPagination();
+</script>
+
+</body>
 </html>

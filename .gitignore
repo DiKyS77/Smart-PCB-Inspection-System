@@ -1,0 +1,20 @@
+# Virtual Environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Dataset
+train/
+val/
+test/
+
+# Hasil training YOLO
+runs/
+
+# Backup
+backup/
+
+# VS Code
+.vscode/

@@ -1,506 +1,559 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PCB Dashboard</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History — PCB Defect Detection</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
 
-    <style>
-      body {
-        background: #eef3fb;
-        min-height: 100vh;
-      }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #eef3fb;
+      min-height: 100vh;
+      margin: 0;
+    }
 
-      .sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 240px;
-        background: #1f2558;
-        color: #eef3fb;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 28px 22px;
-      }
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 240px;
+      background: #1f2558;
+      color: #eef3fb;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 22px;
+      z-index: 100;
+    }
 
-      .sidebar .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 26px;
-        font-weight: 700;
-      }
+    .sidebar .logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px; font-weight: 700; font-size: 0.95rem;
+    }
 
-      .sidebar .logo i {
-        background: #37d08f;
-        color: #0f172a;
-        padding: 10px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-      }
+    .sidebar .logo i {
+      background: #37d08f; color: #0f172a;
+      padding: 10px; border-radius: 12px;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
 
-      .sidebar .menu a {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: #d6d8ef;
-        padding: 12px 14px;
-        border-radius: 14px;
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: background 0.2s ease, color 0.2s ease;
-      }
+    .sidebar .menu a {
+      display: flex; align-items: center; gap: 12px;
+      color: #d6d8ef; padding: 11px 14px;
+      border-radius: 12px; text-decoration: none;
+      margin-bottom: 6px; font-size: 0.9rem;
+      transition: background 0.15s, color 0.15s;
+    }
 
-      .sidebar .menu a:hover,
-      .sidebar .menu a.active {
-        background: rgba(255, 255, 255, 0.08);
-        color: #ffffff;
-      }
+    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
 
-      .sidebar .menu a.active {
-        border-left: 3px solid #37d08f;
-      }
+    .sidebar .menu a.active {
+      background: rgba(255,255,255,0.07); color: #fff;
+      border-left: 3px solid #37d08f; padding-left: 11px;
+    }
 
-      .sidebar-footer,
-      .sidebar .user-card {
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
+    .sidebar-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 16px; display: flex; align-items: center; gap: 12px;
+    }
 
-      .sidebar .user-card {
-        padding: 14px;
-        border-radius: 16px;
-      }
+    .user-info { font-size: 12px; line-height: 1.5; }
 
-      .sidebar-footer img,
-      .sidebar .user-card img {
-        width: 38px;
-        border-radius: 50%;
-      }
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 240px; padding: 32px 32px 48px; }
 
-      .user-info {
-        font-size: 12px;
-      }
+    .page-heading { margin-bottom: 28px; }
+    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
+    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
 
-      main {
-        margin-left: 240px;
-        padding: 28px 30px;
-      }
+    /* ── PANEL ───────────────────────────────────────────────── */
+    .panel {
+      background: #fff; border-radius: 20px;
+      padding: 24px 28px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+      margin-bottom: 24px;
+    }
 
-      .history-wrapper {
-        background: #ffffff;
-        border-radius: 28px;
-        padding: 28px;
-        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08);
-      }
+    .panel-header {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      gap: 12px; margin-bottom: 20px;
+      padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
+      flex-wrap: wrap;
+    }
 
-      .history-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-        margin-bottom: 28px;
-      }
+    .panel-header-left {
+      display: flex; align-items: center; gap: 10px;
+    }
 
-      .history-title h2 {
-        margin: 0;
-        font-size: 1.8rem;
-        font-weight: 800;
-      }
+    .icon-badge {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+    }
 
-      .history-title p {
-        margin: 6px 0 0;
-        color: #6b7280;
-        font-size: 0.95rem;
-      }
+    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
 
-      .search-box {
-        flex: 0 0 280px;
-        position: relative;
-      }
+    /* ── SEARCH BOX ──────────────────────────────────────────── */
+    .search-wrap { position: relative; }
 
-      .search-box input {
-        width: 100%;
-        border: 1px solid #d1d5db;
-        border-radius: 20px;
-        padding: 10px 16px 10px 40px;
-        font-size: 0.9rem;
-      }
+    .search-wrap input {
+      border: 1px solid #e2e8f0; border-radius: 999px;
+      padding: 8px 16px 8px 36px; font-size: 0.86rem;
+      color: #1e293b; background: #f8fafc;
+      outline: none; width: 240px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
 
-      .search-box input:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-      }
+    .search-wrap input:focus {
+      border-color: #1f2558;
+      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
+    }
 
-      .search-box i {
-        position: absolute;
-        left: 14px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: #9ca3af;
-      }
+    .search-wrap i {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%); color: #94a3b8; font-size: 0.82rem;
+    }
 
-      .history-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 24px;
-      }
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .history-table { width: 100%; border-collapse: collapse; }
 
-      .history-table thead {
-        border-bottom: 2px solid #e5e7eb;
-      }
+    .history-table thead tr { border-bottom: 2px solid #f1f5f9; }
 
-      .history-table th {
-        padding: 16px 12px;
-        text-align: left;
-        color: #111827;
-        font-weight: 700;
-        font-size: 0.9rem;
-      }
+    .history-table th {
+      padding: 11px 14px; font-size: 0.75rem; font-weight: 700;
+      color: #6b7280; text-transform: uppercase;
+      letter-spacing: 0.04em; text-align: left;
+    }
 
-      .history-table tbody tr {
-        border-bottom: 1px solid #e5e7eb;
-      }
+    .history-table tbody tr {
+      border-bottom: 1px solid #f8fafc; transition: background 0.1s;
+    }
 
-      .history-table tbody tr:hover {
-        background: #f9fafb;
-      }
+    .history-table tbody tr:hover { background: #f8fafc; }
 
-      .history-table td {
-        padding: 18px 12px;
-        color: #374151;
-      }
+    .history-table td {
+      padding: 13px 14px; font-size: 0.86rem;
+      color: #374151; vertical-align: middle;
+    }
 
-      .history-table .no {
-        font-weight: 700;
-      }
+    /* FIX: thumbnail pakai contain + bg gelap — PCB tidak terdistorsi */
+    .td-thumb {
+      width: 64px; height: 46px;
+      object-fit: contain;      /* FIX dari cover → contain */
+      background: #0f172a;      /* FIX: bg gelap konsisten dengan halaman lain */
+      border-radius: 8px; border: 1px solid #e2e8f0; display: block;
+    }
 
-      .history-table .gambar {
-        width: 60px;
-        height: 60px;
-      }
+    .td-thumb-empty {
+      width: 64px; height: 46px; border-radius: 8px;
+      border: 1px solid #e2e8f0; background: #f1f5f9;
+      display: flex; align-items: center; justify-content: center;
+      color: #cbd5e1;
+    }
 
-      .history-table .gambar img {
-        width: 100%;
-        height: 100%;
-        border-radius: 8px;
-        object-fit: cover;
-      }
+    /* Defect badges — konsisten dengan semua halaman lain */
+    .defect-badge {
+      display: inline-block; padding: 4px 10px;
+      border-radius: 999px; font-size: 0.75rem;
+      font-weight: 700; white-space: nowrap;
+    }
 
-      .history-table .defect-badge {
-        display: inline-block;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        white-space: nowrap;
-      }
+    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
+    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
+    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
+    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
+    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
+    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
+    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
 
-      .defect-spurious-copper {
-        background: rgba(239, 68, 68, 0.16);
-        color: #991b1b;
-      }
+    /* Status pill */
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
 
-      .defect-mouse-bite {
-        background: rgba(59, 130, 246, 0.16);
-        color: #1e40af;
-      }
+    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
+    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
 
-      .defect-spur {
-        background: rgba(249, 115, 22, 0.16);
-        color: #b45309;
-      }
+    /* Accuracy mini bar */
+    .acc-wrap { min-width: 70px; }
+    .acc-num  { font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
+    .acc-track { height: 5px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+    .acc-fill  {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(90deg, #37d08f, #1f2558);
+    }
 
-      .defect-short {
-        background: rgba(139, 92, 246, 0.16);
-        color: #5b21b6;
-      }
+    /* Detail button */
+    .btn-detail {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; border: 1px solid #1f2558; border-radius: 999px;
+      color: #1f2558; font-size: 0.8rem; font-weight: 600;
+      text-decoration: none; background: #fff;
+      transition: background 0.15s, color 0.15s;
+    }
 
-      .defect-missing-hole {
-        background: rgba(34, 197, 94, 0.16);
-        color: #15803d;
-      }
+    .btn-detail:hover { background: #1f2558; color: #fff; }
 
-      .defect-open-circuit {
-        background: rgba(14, 165, 233, 0.16);
-        color: #0c4a6e;
-      }
+    /* Empty state */
+    .empty-state {
+      text-align: center; padding: 48px 20px;
+      display: none;
+    }
 
-      .btn-detail {
-        background: #ffffff;
-        border: 1px solid #3b82f6;
-        color: #3b82f6;
-        padding: 6px 14px;
-        border-radius: 18px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        display: inline-block;
-      }
+    .empty-state.show { display: block; }
+    .empty-state i { font-size: 3rem; color: #cbd5e1; display: block; margin-bottom: 12px; }
+    .empty-state p { color: #94a3b8; margin: 0; }
 
-      .btn-detail:hover {
-        background: #3b82f6;
-        color: #ffffff;
-      }
+    /* Pagination */
+    .pag-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 20px; padding-top: 14px; border-top: 1px solid #f1f5f9;
+      font-size: 0.83rem; color: #6b7280;
+      flex-wrap: wrap; gap: 10px;
+    }
 
-      .pagination-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-top: 24px;
-        padding-top: 20px;
-        border-top: 1px solid #e5e7eb;
-      }
+    .pag-btns { display: flex; gap: 5px; }
 
-      .pagination-info {
-        color: #6b7280;
-        font-size: 0.9rem;
-      }
+    .pag-btn {
+      width: 32px; height: 32px;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      background: #fff; color: #374151;
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
 
-      .pagination {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-      }
+    .pag-btn:hover  { border-color: #1f2558; color: #1f2558; }
+    .pag-btn.active { background: #1f2558; color: #fff; border-color: #1f2558; }
+    .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-      .pagination button,
-      .pagination a {
-        width: 40px;
-        height: 40px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
-        background: #ffffff;
-        color: #374151;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-weight: 600;
-      }
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 991px) {
+      .sidebar { display: none; }
+      .main    { margin-left: 0; padding: 20px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
 
-      .pagination button:hover,
-      .pagination a:hover {
-        border-color: #3b82f6;
-        color: #3b82f6;
-      }
+<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+<div id="sidebar" class="sidebar">
+  <div>
+    <div class="logo">
+      <i class="fas fa-microchip"></i>
+      <span>PCB Defect<br>Detection</span>
+    </div>
+    <div class="menu">
+      <a href="{{ url_for('technician_dashboard') }}">
+        <i class="fas fa-home"></i> Dashboard
+      </a>
+      <a href="{{ url_for('technician_detection') }}">
+        <i class="fas fa-camera"></i> Detection
+      </a>
+      <a href="{{ url_for('technician_history') }}" class="active">
+        <i class="fas fa-clock"></i> History
+      </a>
+      <a href="{{ url_for('technician_report') }}">
+        <i class="fas fa-file-alt"></i> Report
+      </a>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="dropdown">
+      <a href="#" data-bs-toggle="dropdown">
+        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li>
+          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">Settings</a>
+        </li>
+        <li>
+          <a class="dropdown-item" href="/logout">Logout</a>
+        </li>
+      </ul>
+    </div>
+    <div class="user-info">
+      <div style="font-weight:600">{{ username }}</div>
+      <div style="color:#94a3b8">{{ role }}</div>
+    </div>
+  </div>
+</div>
 
-      .pagination .active {
-        background: #3b82f6;
-        color: #ffffff;
-        border-color: #3b82f6;
-      }
+<!-- ── MAIN ─────────────────────────────────────────────────────── -->
+<main class="main">
 
-      .error-message {
-        display: none;
-        text-align: center;
-        padding: 40px 20px;
-        color: #6b7280;
-      }
+  <div class="page-heading">
+    <h2>History</h2>
+    <p>All PCB detection results — click <strong>View Detail</strong> to inspect each one.</p>
+  </div>
 
-      .error-message.show {
-        display: block;
-      }
-
-      .error-message i {
-        font-size: 3rem;
-        color: #d1d5db;
-        margin-bottom: 16px;
-        display: block;
-      }
-
-      .error-message p {
-        margin: 0;
-        font-size: 1rem;
-      }
-
-      @media (max-width: 991px) {
-        .sidebar {
-          left: -240px;
-          transition: 0.3s;
-        }
-
-        .sidebar.show {
-          left: 0;
-        }
-
-        main {
-          margin-left: 0;
-        }
-      }
-    </style>
-  </head>
-
-  <body>
-    <!-- SIDEBAR -->
-    <div id="sidebar" class="sidebar">
-      <!-- TOP -->
-      <div>
-        <div class="logo">
-          <i class="fas fa-microchip"></i>
-          <span>
-            PCB Defect<br />
-            Detection
-          </span>
+  <!-- ══ DETECTION LOG TABLE ══════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
+          <i class="fas fa-table"></i>
         </div>
-
-        <div class="menu">
-          <a href="{{ url_for('technician_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
-
-          <a href="{{ url_for('technician_detection') }}"><i class="fas fa-camera"></i> Detection</a>
-
-          <a href="{{ url_for('technician_history') }}" class="active"><i class="fas fa-clock"></i> History</a>
-
-          <a href="{{ url_for('technician_report') }}"><i class="fas fa-file-alt"></i> Report</a>
+        <div>
+          <h5>Detection Log</h5>
+          <p>{{ history_rows | length }} total record{{ 's' if history_rows | length != 1 }}</p>
         </div>
       </div>
 
-      <!-- USER -->
-      <div class="sidebar-footer">
-        <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
-
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="{{ url_for('technician_settings') }}">Settings</a>
-            </li>
-            <li>
-              <a class="dropdown-item" href="/logout">Logout</a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="user-info">
-          <div>{{ username }}</div>
-          <div style="color: #9ca3af;">{{ role }}</div>
-        </div>
+      <!-- Search -->
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search defect type…" />
       </div>
     </div>
 
-    <!-- MAIN -->
-    <main id="main">
-      <div class="history-wrapper">
-        <div class="history-header">
-          <div class="history-title">
-            <h2>History</h2>
-            <p>List of all detection results performed.</p>
-          </div>
-          <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" id="searchDefect" placeholder="Search defect type..." />
-          </div>
-        </div>
+    <!-- Empty state (search) -->
+    <div class="empty-state" id="emptySearch">
+      <i class="fas fa-search"></i>
+      <p>No records match your search.</p>
+    </div>
 
-        <div class="error-message" id="errorMessage">
-          <i class="fas fa-inbox"></i>
-          <p>No data found</p>
-        </div>
+    <div class="table-responsive" id="tableWrap">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Image</th>
+            <th>File Name</th>
+            <th>Date &amp; Time</th>
+            <th>Defect Type</th>
+            <th>Accuracy</th>    {# FIX: kolom baru — dikirim app.py tapi tidak ada di template lama #}
+            <th>Status</th>      {# FIX: kolom baru — dikirim app.py tapi tidak ada di template lama #}
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% if history_rows %}
+            {% for row in history_rows %}
+            <tr data-defect="{{ (row.defect_type or '') | lower }}">
 
-        <div class="table-responsive" id="tableContainer">
-          <table class="history-table">
-            <thead>
-              <tr>
-                <th>No</th>
-                <th>Image</th>
-                <th>File Name</th>
-                <th>Date</th>
-                <th>Defect Type</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody id="historyTableBody">
-              {% if history_rows %}
-                {% for row in history_rows %}
-                <tr>
-                  <td class="no">{{ loop.index }}</td>
-                  <td class="gambar"><img src="{{ row.image_url or 'https://via.placeholder.com/60x60.png?text=PCB' }}" alt="PCB" /></td>
-                  <td>{{ row.file_name or 'Not available' }}</td>
-                  <td>{{ row.created_at.strftime('%d %B %Y') }}<br>{{ row.created_at.strftime('%H:%M:%S') }}</td>
-                  <td><span class="defect-badge defect-{{ row.defect_type|replace('_', '-') }}">{{ row.defect_type }}</span></td>
-                  <td><a href="{{ url_for('technician_history_detail', detection_id=row.id) }}" class="btn-detail">View Details</a></td>
-                </tr>
-                {% endfor %}
-              {% else %}
-                <tr>
-                  <td colspan="6" style="text-align: center; padding: 24px;">No detection history available.</td>
-                </tr>
-              {% endif %}
-            </tbody>
-          </table>
-        </div>
+              <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
 
-        <div class="pagination-wrapper">
-          <div class="pagination-info">Showing 1 to 8 of 24 records</div>
-          <div class="pagination">
-            <button><i class="fas fa-chevron-left"></i></button>
-            <button class="active">1</button>
-            <button>2</button>
-            <button>3</button>
-            <button><i class="fas fa-chevron-right"></i></button>
-          </div>
-        </div>
-      </div>
-    </main>
+              <td>
+                {# FIX: pakai row.image_url (hasil get_image_url dari backend),
+                         BUKAN row.image_path yang lama — path bisa salah folder #}
+                {% if row.image_url %}
+                  <img class="td-thumb"
+                       src="{{ row.image_url }}"
+                       alt="{{ row.defect_type }}" />
+                {% else %}
+                  <div class="td-thumb-empty">
+                    <i class="fas fa-image"></i>
+                  </div>
+                {% endif %}
+              </td>
 
-    <!-- JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+              <td style="font-size:0.8rem;color:#6b7280;
+                         max-width:130px;overflow:hidden;
+                         text-overflow:ellipsis;white-space:nowrap"
+                  title="{{ row.file_name or '-' }}">
+                {{ row.file_name or 'N/A' }}
+              </td>
 
-    <script>
-      function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('show')
+              <td>
+                {# FIX: None-guard agar tidak crash jika created_at NULL #}
+                <div style="font-size:0.85rem;font-weight:600">
+                  {{ row.created_at.strftime('%d %b %Y') if row.created_at else '—' }}
+                </div>
+                <div style="font-size:0.76rem;color:#94a3b8">
+                  {{ row.created_at.strftime('%H:%M:%S') if row.created_at else '' }}
+                </div>
+              </td>
+
+              <td>
+                <span class="defect-badge
+                  defect-{{ (row.defect_type or 'no-defect') | replace('_','-') }}">
+                  {{ row.defect_type or 'No Defect' }}
+                </span>
+              </td>
+
+              {# FIX: accuracy — backend kirim tapi tidak pernah ditampilkan #}
+              <td>
+                <div class="acc-wrap">
+                  <div class="acc-num">{{ row.accuracy or 0 }}%</div>
+                  <div class="acc-track">
+                    <div class="acc-fill" style="width:{{ row.accuracy or 0 }}%"></div>
+                  </div>
+                </div>
+              </td>
+
+              {# FIX: status — backend kirim tapi tidak pernah ditampilkan #}
+              <td>
+                <span class="status-pill
+                  {{ 'defect' if row.status == 'DEFECT' else 'normal' }}">
+                  <i class="fas fa-{{ 'exclamation-circle'
+                     if row.status == 'DEFECT' else 'check-circle' }}"></i>
+                  {{ row.status or 'NORMAL' }}
+                </span>
+              </td>
+
+              <td>
+                <a href="{{ url_for('technician_history_detail', detection_id=row.id) }}"
+                   class="btn-detail">
+                  <i class="fas fa-arrow-right"></i> Detail
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <tr id="noDataRow">
+              <td colspan="8" style="text-align:center;padding:44px;color:#94a3b8">
+                <i class="fas fa-camera"
+                   style="display:block;font-size:2.5rem;
+                          margin-bottom:12px;color:#cbd5e1"></i>
+                No detection history yet.
+                <a href="{{ url_for('technician_detection') }}"
+                   style="display:block;margin-top:10px;
+                          color:#1f2558;font-weight:600;text-decoration:none">
+                  Run your first detection →
+                </a>
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FIX: Pagination dinamis — sebelumnya hardcoded "Showing 1 to 8 of 24" -->
+    <div class="pag-row">
+      <span id="pagInfo"></span>
+      <div class="pag-btns" id="pagBtns"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── SCRIPTS ───────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  /* ── SEARCH ──────────────────────────────────────────────── */
+  const searchInput  = document.getElementById('searchInput');
+  const tableWrap    = document.getElementById('tableWrap');
+  const emptySearch  = document.getElementById('emptySearch');
+
+  function getDataRows() {
+    // FIX: exclude static empty-data rows (no data-defect attribute)
+    return Array.from(
+      document.querySelectorAll('#tableBody tr[data-defect]')
+    );
+  }
+
+  searchInput.addEventListener('input', function() {
+    const term = this.value.toLowerCase().trim();
+    let visible = 0;
+
+    getDataRows().forEach(row => {
+      // FIX: search by data-defect attribute, tidak perlu querySelector
+      // yang bisa crash jika td tidak ada
+      const match = !term || row.dataset.defect.includes(term);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    const noResult = visible === 0 && term !== '';
+    emptySearch.classList.toggle('show', noResult);
+    tableWrap.style.display  = noResult ? 'none' : '';
+
+    currentPage = 1;
+    renderPagination();
+  });
+
+  /* ── PAGINATION (dinamis) ───────────────────────────────── */
+  const PER_PAGE = 10;
+  let currentPage = 1;
+
+  function getVisibleRows() {
+    return getDataRows().filter(r => r.style.display !== 'none');
+  }
+
+  function renderPagination() {
+    const rows  = getVisibleRows();
+    const total = rows.length;
+
+    if (total === 0) {
+      document.getElementById('pagInfo').textContent = '';
+      document.getElementById('pagBtns').innerHTML = '';
+      return;
+    }
+
+    const pages = Math.ceil(total / PER_PAGE);
+    const start = (currentPage - 1) * PER_PAGE;
+    const end   = Math.min(start + PER_PAGE, total);
+
+    // show / hide rows per page
+    rows.forEach((r, i) => {
+      r.style.display = (i >= start && i < end) ? '' : 'none';
+    });
+
+    document.getElementById('pagInfo').textContent =
+      `Showing ${start + 1}–${end} of ${total} record${total !== 1 ? 's' : ''}`;
+
+    const btns = document.getElementById('pagBtns');
+    btns.innerHTML = '';
+
+    // Prev button
+    const prev     = document.createElement('button');
+    prev.className = 'pag-btn';
+    prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prev.disabled  = currentPage === 1;
+    prev.onclick   = () => { currentPage--; renderPagination(); };
+    btns.appendChild(prev);
+
+    // Page number buttons with ellipsis
+    const WING = 2;
+    for (let p = 1; p <= pages; p++) {
+      if (
+        p === 1 || p === pages ||
+        (p >= currentPage - WING && p <= currentPage + WING)
+      ) {
+        const b       = document.createElement('button');
+        b.className   = 'pag-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = p;
+        b.onclick = (() => {
+          const pg = p;
+          return () => { currentPage = pg; renderPagination(); };
+        })();
+        btns.appendChild(b);
+      } else if (
+        p === currentPage - WING - 1 ||
+        p === currentPage + WING + 1
+      ) {
+        const dot = document.createElement('span');
+        dot.textContent = '…';
+        dot.style.cssText =
+          'padding:0 4px;color:#94a3b8;font-size:0.82rem;' +
+          'display:flex;align-items:center;';
+        btns.appendChild(dot);
       }
+    }
 
-      // Search functionality for defect type
-      const searchInput = document.getElementById('searchDefect')
-      const tableBody = document.getElementById('historyTableBody')
-      const errorMessage = document.getElementById('errorMessage')
-      const tableContainer = document.getElementById('tableContainer')
-      const allRows = tableBody.querySelectorAll('tr')
+    // Next button
+    const next     = document.createElement('button');
+    next.className = 'pag-btn';
+    next.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    next.disabled  = currentPage >= pages;
+    next.onclick   = () => { currentPage++; renderPagination(); };
+    btns.appendChild(next);
+  }
 
-      searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase().trim()
-        let visibleCount = 0
+  // Init on page load
+  renderPagination();
+</script>
 
-        if (searchTerm === '') {
-          // Show all rows if search is empty
-          allRows.forEach(row => {
-            row.style.display = ''
-            visibleCount++
-          })
-        } else {
-          // Search only in defect type column (5th column)
-          allRows.forEach(row => {
-            const defectCell = row.querySelector('td:nth-child(5)').textContent.trim().toLowerCase()
-            
-            if (defectCell.includes(searchTerm)) {
-              row.style.display = ''
-              visibleCount++
-            } else {
-              row.style.display = 'none'
-            }
-          })
-        }
-
-        // Show error message if no results found
-        if (visibleCount === 0 && searchTerm !== '') {
-          errorMessage.classList.add('show')
-          tableContainer.style.display = 'none'
-        } else {
-          errorMessage.classList.remove('show')
-          tableContainer.style.display = ''
-        }
-      })
-    </script>
-  </body>
+</body>
 </html>

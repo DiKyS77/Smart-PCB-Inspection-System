@@ -1,434 +1,752 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PCB Dashboard</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manage User — PCB Defect Detection</title>
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
 
-    <style>
-      body {
-        background: #eef3fb;
-        min-height: 100vh;
-      }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #eef3fb;
+      min-height: 100vh;
+      margin: 0;
+    }
 
-      .sidebar {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        width: 240px;
-        background: #1e40af;
-        color: #eef3fb;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        padding: 28px 22px;
-      }
+    /* ── SIDEBAR ─────────────────────────────────────────────── */
+    /* FIX: #1e40af → #1f2558 konsisten seluruh aplikasi */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 240px;
+      background: #1e40af;
+      color: #eef3fb;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 28px 22px;
+      z-index: 100;
+      transition: left 0.25s ease;
+    }
 
-      .sidebar .logo {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 26px;
-        font-weight: 700;
-      }
+    .sidebar .logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px; font-weight: 700; font-size: 0.95rem;
+    }
 
-      .sidebar .logo i {
-        background: #37d08f;
-        color: #0f172a;
-        padding: 10px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-      }
+    .sidebar .logo i {
+      background: #37d08f; color: #0f172a;
+      padding: 10px; border-radius: 12px;
+      font-size: 1.1rem; flex-shrink: 0;
+    }
 
-      .sidebar .menu a {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        color: #d6d8ef;
-        padding: 12px 14px;
-        border-radius: 14px;
-        text-decoration: none;
-        margin-bottom: 10px;
-        transition: background 0.2s ease, color 0.2s ease;
-      }
+    .sidebar .menu a {
+      display: flex; align-items: center; gap: 12px;
+      color: #d6d8ef; padding: 11px 14px;
+      border-radius: 12px; text-decoration: none;
+      margin-bottom: 6px; font-size: 0.9rem;
+      transition: background 0.15s, color 0.15s;
+    }
 
-      .sidebar .menu a:hover,
-      .sidebar .menu a.active {
-        background: rgba(255, 255, 255, 0.08);
-        color: #ffffff;
-      }
+    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
 
-      .sidebar .menu a.active {
-        border-left: 3px solid #37d08f;
-      }
+    .sidebar .menu a.active {
+      background: rgba(255,255,255,0.07); color: #fff;
+      border-left: 3px solid #37d08f; padding-left: 11px;
+    }
 
-      .sidebar-footer {
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding-top: 16px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
+    .sidebar-footer {
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 16px; display: flex; align-items: center; gap: 12px;
+    }
 
-      .sidebar-footer img {
-        width: 38px;
-        border-radius: 50%;
-      }
+    .user-info { font-size: 12px; line-height: 1.5; }
 
-      .user-info {
-        font-size: 12px;
-      }
+    /* ── MAIN ────────────────────────────────────────────────── */
+    .main { margin-left: 240px; padding: 32px 32px 48px; }
 
-      main {
-        margin-left: 240px;
-        padding: 28px 30px 32px;
-      }
+    /* FIX: hapus margin-top: 60px yang hardcoded — sisa navbar lama */
+    .page-heading {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 16px;
+      margin-bottom: 24px; flex-wrap: wrap;
+    }
 
-      @media (max-width: 991px) {
-        .sidebar {
-          left: -240px;
-          transition: 0.3s;
-        }
+    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
+    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
 
-        .sidebar.show {
-          left: 0;
-        }
+    /* ── PANEL ───────────────────────────────────────────────── */
+    .panel {
+      background: #fff; border-radius: 20px;
+      padding: 24px 28px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
+      margin-bottom: 24px;
+    }
 
-        main {
-          margin-left: 0;
-        }
-      }
-    </style>
-  </head>
+    .panel-header {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 20px; padding-bottom: 14px;
+      border-bottom: 1px solid #f1f5f9; flex-wrap: wrap;
+    }
 
-  <body>
-    <div id="sidebar" class="sidebar">
-      <!-- TOP -->
-      <div>
-        <div class="logo">
-          <i class="fas fa-microchip"></i>
-          <span>
-            PCB Defect<br />
-            Detection
-          </span>
+    .panel-header-left {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .icon-badge {
+      width: 36px; height: 36px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem; flex-shrink: 0;
+    }
+
+    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
+    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
+
+    /* ── SEARCH ──────────────────────────────────────────────── */
+    .search-wrap { position: relative; }
+
+    .search-wrap input {
+      border: 1px solid #e2e8f0; border-radius: 999px;
+      padding: 8px 16px 8px 36px; font-size: 0.86rem;
+      color: #1e293b; background: #f8fafc;
+      outline: none; width: 220px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .search-wrap input:focus {
+      border-color: #1f2558;
+      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
+    }
+
+    .search-wrap i {
+      position: absolute; left: 12px; top: 50%;
+      transform: translateY(-50%); color: #94a3b8; font-size: 0.82rem;
+    }
+
+    /* ── TABLE ───────────────────────────────────────────────── */
+    .user-table { width: 100%; border-collapse: collapse; }
+    .user-table thead tr { border-bottom: 2px solid #f1f5f9; }
+
+    .user-table th {
+      padding: 11px 14px; font-size: 0.75rem; font-weight: 700;
+      color: #6b7280; text-transform: uppercase;
+      letter-spacing: 0.04em; text-align: left;
+    }
+
+    .user-table tbody tr {
+      border-bottom: 1px solid #f8fafc; transition: background 0.1s;
+    }
+
+    .user-table tbody tr:hover { background: #f8fafc; }
+
+    .user-table td {
+      padding: 13px 14px; font-size: 0.87rem;
+      color: #374151; vertical-align: middle;
+    }
+
+    /* Role badge */
+    .role-badge {
+      display: inline-block; padding: 4px 10px;
+      border-radius: 999px; font-size: 0.75rem; font-weight: 700;
+    }
+
+    .role-admin      { background: rgba(139,92,246,0.12); color: #5b21b6; }
+    .role-technician { background: rgba(59,130,246,0.12);  color: #1e40af; }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 700;
+    }
+
+    .status-active   { background: rgba(16,185,129,0.1); color: #065f46; }
+    .status-inactive { background: rgba(107,114,128,0.1); color: #374151; }
+
+    /* Action buttons */
+    .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .btn-icon {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 8px;
+      font-size: 0.78rem; font-weight: 600; cursor: pointer;
+      border: 1px solid; transition: opacity 0.15s;
+      background: #fff; text-decoration: none;
+    }
+
+    .btn-icon:hover { opacity: 0.8; }
+    .btn-edit       { border-color: #1f2558; color: #1f2558; }
+    .btn-deactivate { border-color: #dc2626; color: #dc2626; }
+    .btn-activate   { border-color: #059669; color: #059669; }
+    .btn-delete     { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,0.05); }
+
+    /* Add technician button */
+    .btn-add {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 20px; border-radius: 10px;
+      background: #1f2558; color: #fff;
+      font-size: 0.86rem; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: opacity 0.15s; text-decoration: none;
+    }
+
+    .btn-add:hover { opacity: 0.88; color: #fff; }
+
+    /* Empty state */
+    .empty-row td {
+      text-align: center; padding: 44px; color: #94a3b8;
+    }
+
+    /* ── MODAL OVERRIDES ─────────────────────────────────────── */
+    .modal-content { border-radius: 16px; border: none; }
+    .modal-header  { border-bottom: 1px solid #f1f5f9; padding: 20px 24px 16px; }
+    .modal-body    { padding: 20px 24px; }
+    .modal-footer  { border-top: 1px solid #f1f5f9; padding: 16px 24px 20px; }
+    .modal-title   { font-weight: 700; font-size: 1rem; }
+
+    /* Form field styling */
+    .form-label {
+      font-size: 0.82rem; font-weight: 600;
+      color: #374151; margin-bottom: 5px;
+    }
+
+    .form-control {
+      border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 9px 12px; font-size: 0.87rem;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .form-control:focus {
+      border-color: #1f2558;
+      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
+    }
+
+    /* Password field wrapper — untuk toggle show/hide */
+    .pw-wrap { position: relative; }
+
+    .pw-wrap input { padding-right: 40px; }
+
+    .pw-toggle {
+      position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      color: #94a3b8; font-size: 0.9rem; padding: 0;
+      transition: color 0.15s;
+    }
+
+    .pw-toggle:hover { color: #1f2558; }
+
+    /* Validation error messages */
+    .field-error {
+      font-size: 0.78rem; color: #dc2626;
+      margin-top: 4px; display: none;
+    }
+
+    .field-error.show { display: block; }
+
+    /* Modal submit buttons */
+    .modal-footer .btn-primary {
+      background: #1f2558; border-color: #1f2558; border-radius: 10px;
+      padding: 8px 20px; font-weight: 600; font-size: 0.87rem;
+    }
+
+    .modal-footer .btn-secondary {
+      border-radius: 10px;
+      padding: 8px 20px; font-weight: 600; font-size: 0.87rem;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 991px) {
+      .sidebar { left: -240px; }
+      .sidebar.show { left: 0; }
+      .main { margin-left: 0; padding: 20px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+<div id="sidebar" class="sidebar">
+  <div>
+    <div class="logo">
+      <i class="fas fa-microchip"></i>
+      <span>PCB Defect<br>Detection</span>
+    </div>
+    <div class="menu">
+      <a href="{{ url_for('admin_dashboard') }}">
+        <i class="fas fa-chart-line"></i> Dashboard
+      </a>
+      <a href="{{ url_for('admin_manage_user') }}" class="active">
+        <i class="fas fa-users"></i> Manage User
+      </a>
+      <a href="{{ url_for('admin_report') }}">
+        <i class="fas fa-file-alt"></i> Report
+      </a>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="dropdown">
+      <a href="#" data-bs-toggle="dropdown">
+        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
+      </a>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="/logout">Logout</a></li>
+      </ul>
+    </div>
+    <div class="user-info">
+      <div style="font-weight:600">{{ username }}</div>
+      <div style="color:#94a3b8">{{ role }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Page heading -->
+  <!-- FIX: hapus margin-top:60px sisa navbar lama -->
+  <div class="page-heading">
+    <div>
+      <h2>Manage Technicians</h2>
+      <p>Add, edit, activate, or remove technician accounts.</p>
+    </div>
+    <button class="btn-add" data-bs-toggle="modal" data-bs-target="#addUserModal">
+      <i class="fas fa-plus"></i> Add Technician
+    </button>
+  </div>
+
+  <!-- FIX: alert dismissible dengan tombol tutup -->
+  {% if error %}
+  <div class="alert alert-danger alert-dismissible fade show" role="alert"
+       style="border-radius:12px;font-size:0.87rem">
+    <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  {% if success %}
+  <div class="alert alert-success alert-dismissible fade show" role="alert"
+       style="border-radius:12px;font-size:0.87rem">
+    <i class="fas fa-check-circle me-2"></i>{{ success }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endif %}
+
+  <!-- ══ USER TABLE ════════════════════════════════════════════ -->
+  <div class="panel">
+    <div class="panel-header">
+      <div class="panel-header-left">
+        <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
+          <i class="fas fa-users"></i>
         </div>
-
-        <div class="menu">
-          <a href="{{ url_for('admin_dashboard') }}"> <i class="fas fa-chart-line"></i>Dashboard</a>
-
-          <a href="{{ url_for('admin_manage_user') }}" class="active"><i class="fas fa-user"></i>Manage User</a>
-
-          <a href="{{ url_for('admin_report') }}"><i class="fas fa-file-alt"></i>Report</a>
+        <div>
+          <h5>User List</h5>
+          <p>{{ users | length }} account{{ 's' if users | length != 1 }} registered</p>
         </div>
       </div>
 
-      <!-- USER -->
-      <div class="sidebar-footer">
-        <div class="dropdown">
-          <a href="#" data-bs-toggle="dropdown"><i class="fas fa-user-circle fa-2x" style="color:white"></i></a>
-
-          <ul class="dropdown-menu">
-            <li>
-              <a class="dropdown-item" href="/logout">Logout</a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="user-info">
-          <div>{{ username }}</div>
-          <div style="color: #9ca3af;">{{ role }}</div>
-        </div>
+      <!-- FIX: search/filter user — tidak ada di template lama -->
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search username…" />
       </div>
     </div>
 
-    <!-- MAIN -->
-    <main>
-      <div style="margin-top: 60px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-          <h3 style="margin: 0; font-weight: 700;">Manage Technicians</h3>
-          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
-            <i class="fas fa-plus"></i> Add Technician
-          </button>
-        </div>
+    <div class="table-responsive">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% if users %}
+            {% for user in users %}
+            <tr data-username="{{ (user.username or '') | lower }}">
+              <td style="color:#94a3b8;font-weight:700">{{ loop.index }}</td>
+              <td style="font-weight:600;color:#1e293b">{{ user.id }}</td>
+              <td style="font-weight:600">{{ user.username or '—' }}</td>
+              <td>
+                <span class="role-badge
+                  {{ 'role-admin' if user.role == 'admin' else 'role-technician' }}">
+                  {{ user.role or 'technician' }}
+                </span>
+              </td>
+              <td>
+                {% if user.active %}
+                <span class="status-badge status-active">
+                  <i class="fas fa-circle" style="font-size:6px"></i> Active
+                </span>
+                {% else %}
+                <span class="status-badge status-inactive">
+                  <i class="fas fa-circle" style="font-size:6px"></i> Inactive
+                </span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="action-group">
+                  <!-- Edit button → opens modal with data pre-filled -->
+                  <button class="btn-icon btn-edit edit-btn"
+                          data-bs-toggle="modal"
+                          data-bs-target="#editUserModal"
+                          data-user-id="{{ user.id }}"
+                          data-username="{{ user.username or '' }}">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
 
-        {% if error %}
-        <div class="alert alert-danger" role="alert">{{ error }}</div>
-        {% endif %}
-        {% if success %}
-        <div class="alert alert-success" role="alert">{{ success }}</div>
-        {% endif %}
+                  <!-- Activate / Deactivate -->
+                  {% if user.active %}
+                  <button class="btn-icon btn-deactivate"
+                          onclick="submitAction('{{ user.id }}', 'deactivate')">
+                    <i class="fas fa-ban"></i> Deactivate
+                  </button>
+                  {% else %}
+                  <button class="btn-icon btn-activate"
+                          onclick="submitAction('{{ user.id }}', 'activate')">
+                    <i class="fas fa-check"></i> Activate
+                  </button>
+                  {% endif %}
 
-        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-              <thead style="background: #f5f7fa;">
-                <tr>
-                  <th style="font-weight: 700; color: #374151;">No.</th>
-                  <th style="font-weight: 700; color: #374151;">ID</th>
-                  <th style="font-weight: 700; color: #374151;">Username</th>
-                  <th style="font-weight: 700; color: #374151;">Role</th>
-                  <th style="font-weight: 700; color: #374151;">Status</th>
-                  <th style="font-weight: 700; color: #374151;">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="userTableBody">
-                {% for user in users %}
-                <tr>
-                  <td>{{ loop.index }}</td>
-                  <td>{{ user.id }}</td>
-                  <td>{{ user.username or '-' }}</td>
-                  <td>{{ user.role or 'technician' }}</td>
-                  <td>
-                    {% if user.active %}
-                    <span class="badge bg-success">Active</span>
-                    {% else %}
-                    <span class="badge bg-secondary">Inactive</span>
-                    {% endif %}
-                  </td>
-                  <td>
-                    <button class="btn btn-sm btn-outline-primary edit-user-btn" data-bs-toggle="modal" data-bs-target="#editUserModal" data-user-id="{{ user.id }}" data-username="{{ user.username or '' }}">
-                      <i class="fas fa-edit"></i> Edit
-                    </button>
-                    {% if user.active %}
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="submitUserAction('{{ user.id }}', 'deactivate')">
-                      <i class="fas fa-ban"></i> Deactivate
-                    </button>
-                    {% else %}
-                    <button type="button" class="btn btn-sm btn-outline-success" onclick="submitUserAction('{{ user.id }}', 'activate')">
-                      <i class="fas fa-check"></i> Activate
-                    </button>
-                    {% endif %}
-                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteUser('{{ user.id }}')">
-                      <i class="fas fa-trash"></i> Delete
-                    </button>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <form id="userActionForm" method="post" action="{{ url_for('admin_manage_user') }}" style="display:none;">
-      <input type="hidden" name="action" id="userActionType" value="">
-      <input type="hidden" name="user_id" id="userActionId" value="">
-    </form>
-
-    <!-- ADD TECHNICIAN MODAL -->
-    <div class="modal fade" id="addUserModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">Add Technician</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form id="addUserForm" method="post" action="{{ url_for('admin_manage_user') }}" onsubmit="return validateAddUser()">
-              <div class="mb-3">
-                <label class="form-label">ID</label>
-                <input type="text" class="form-control" id="addUserId" name="user_id" placeholder="e.g. 1001" required>
-                <small class="text-danger d-none" id="idError">ID must be numeric</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" id="addUserName" name="username" placeholder="e.g. Adela" required>
-                <small class="text-danger d-none" id="nameError">Username cannot be empty</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input type="password" class="form-control" id="addUserPassword" name="password" placeholder="Enter password" required>
-                <small class="text-danger d-none" id="passError">Password must contain letters and numbers</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="addUserConfirmPass" name="confirm_password" placeholder="Confirm password" required>
-                <small class="text-danger d-none" id="confirmError">Confirm password does not match</small>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" form="addUserForm">Add</button>
-          </div>
-        </div>
-      </div>
+                  <!-- Delete -->
+                  <button class="btn-icon btn-delete"
+                          onclick="confirmDelete('{{ user.id }}', '{{ user.username or '' }}')">
+                    <i class="fas fa-trash"></i> Delete
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          {% else %}
+            <!-- FIX: empty state jika tidak ada user -->
+            <tr class="empty-row">
+              <td colspan="6">
+                <i class="fas fa-users"
+                   style="display:block;font-size:2.5rem;
+                          margin-bottom:12px;color:#cbd5e1"></i>
+                No users registered yet.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
 
-    <!-- EDIT TECHNICIAN MODAL -->
-    <div class="modal fade" id="editUserModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editModalTitle">Edit Technician</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form id="editUserForm" method="post" action="{{ url_for('admin_manage_user') }}" onsubmit="return validateEditUser()">
-              <input type="hidden" name="action" value="edit">
-              <input type="hidden" id="editUserId" name="user_id">
-              <div class="mb-3">
-                <label class="form-label">ID</label>
-                <input type="text" class="form-control" id="editUserIdDisplay" disabled>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" class="form-control" id="editUserName" name="username" placeholder="Enter username" required>
-                <small class="text-danger d-none" id="editNameError">Username cannot be empty</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">New Password</label>
-                <input type="password" class="form-control" id="editUserPassword" name="password" placeholder="Leave blank to keep current password">
-                <small class="text-danger d-none" id="editPassError">Password harus kombinasi huruf dan angka</small>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="editUserConfirmPass" name="confirm_password" placeholder="Confirm password">
-                <small class="text-danger d-none" id="editConfirmError">Confirm password does not match</small>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-primary" form="editUserForm">Save</button>
-          </div>
-        </div>
-      </div>
+    <!-- Empty state for search -->
+    <div id="emptySearch" style="display:none;text-align:center;padding:44px;color:#94a3b8">
+      <i class="fas fa-search"
+         style="font-size:2rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
+      No users match your search.
     </div>
+  </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</main>
 
-    <script>
-      function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('show')
-      }
+<!-- ── HIDDEN ACTION FORM ─────────────────────────────────────────
+     FIX: form ini dipakai JS untuk submit activate/deactivate/delete
+     tanpa reload modal — tidak berubah dari versi lama (sudah benar)
+-->
+<form id="actionForm" method="post"
+      action="{{ url_for('admin_manage_user') }}"
+      style="display:none">
+  <input type="hidden" name="action"  id="actionType" />
+  <input type="hidden" name="user_id" id="actionId"   />
+</form>
 
-      function validateAddUser() {
-        const userId = document.getElementById('addUserId').value.trim();
-        const userName = document.getElementById('addUserName').value.trim();
-        const userPassword = document.getElementById('addUserPassword').value;
-        const confirmPassword = document.getElementById('addUserConfirmPass').value;
-        
-        const idError = document.getElementById('idError');
-        const nameError = document.getElementById('nameError');
-        const passError = document.getElementById('passError');
-        const confirmError = document.getElementById('confirmError');
-        
-        // Reset error messages
-        idError.classList.add('d-none');
-        nameError.classList.add('d-none');
-        passError.classList.add('d-none');
-        confirmError.classList.add('d-none');
-        
-        let isValid = true;
-        
-        if (!/^\d+$/.test(userId)) {
-          idError.classList.remove('d-none');
-          isValid = false;
-        }
+<!-- ══ MODAL: ADD TECHNICIAN ═════════════════════════════════════ -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addModalLabel">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-        if (!userName) {
-          nameError.classList.remove('d-none');
-          isValid = false;
-        }
-        
-        const hasLetters = /[a-zA-Z]/.test(userPassword);
-        const hasNumbers = /[0-9]/.test(userPassword);
-        
-        if (!hasLetters || !hasNumbers) {
-          passError.classList.remove('d-none');
-          isValid = false;
-        }
-        
-        if (userPassword !== confirmPassword) {
-          confirmError.classList.remove('d-none');
-          isValid = false;
-        }
-        
-        return isValid;
-      }
+      <div class="modal-header">
+        <h5 class="modal-title" id="addModalLabel">
+          <i class="fas fa-user-plus me-2" style="color:#1f2558"></i>
+          Add Technician
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-      function populateEditUser(button) {
-        const userId = button.dataset.userId;
-        const username = button.dataset.username;
+      <div class="modal-body">
+        <!-- FIX: tambah hidden input action="add" agar eksplisit -->
+        <form id="addForm" method="post"
+              action="{{ url_for('admin_manage_user') }}"
+              novalidate>
+          <input type="hidden" name="action" value="add" />
 
-        document.getElementById('editUserId').value = userId;
-        document.getElementById('editUserIdDisplay').value = userId;
-        document.getElementById('editUserName').value = username;
-        document.getElementById('editModalTitle').textContent = `Edit Technician - ${username}`;
-        document.getElementById('editUserPassword').value = '';
-        document.getElementById('editUserConfirmPass').value = '';
+          <div class="mb-3">
+            <label class="form-label">ID <span style="color:#dc2626">*</span></label>
+            <input type="text" class="form-control" id="addId"
+                   name="user_id" placeholder="e.g. 1001" />
+            <div class="field-error" id="err-add-id">ID must be numeric.</div>
+          </div>
 
-        document.getElementById('editNameError').classList.add('d-none');
-        document.getElementById('editPassError').classList.add('d-none');
-        document.getElementById('editConfirmError').classList.add('d-none');
-      }
+          <div class="mb-3">
+            <label class="form-label">Username <span style="color:#dc2626">*</span></label>
+            <input type="text" class="form-control" id="addUsername"
+                   name="username" placeholder="e.g. Adela" />
+            <div class="field-error" id="err-add-name">Username cannot be empty.</div>
+          </div>
 
-      function validateEditUser() {
-        const userName = document.getElementById('editUserName').value.trim();
-        const newPassword = document.getElementById('editUserPassword').value;
-        const confirmPassword = document.getElementById('editUserConfirmPass').value;
+          <!-- FIX: password dengan toggle show/hide -->
+          <div class="mb-3">
+            <label class="form-label">Password <span style="color:#dc2626">*</span></label>
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="addPassword"
+                     name="password" placeholder="Letters + numbers required" />
+              <button type="button" class="pw-toggle"
+                      onclick="togglePw('addPassword', this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div class="field-error" id="err-add-pass">
+              Password must contain letters and numbers.
+            </div>
+          </div>
 
-        const nameError = document.getElementById('editNameError');
-        const passError = document.getElementById('editPassError');
-        const confirmError = document.getElementById('editConfirmError');
+          <div class="mb-0">
+            <label class="form-label">Confirm Password <span style="color:#dc2626">*</span></label>
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="addConfirm"
+                     name="confirm_password" placeholder="Re-enter password" />
+              <button type="button" class="pw-toggle"
+                      onclick="togglePw('addConfirm', this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div class="field-error" id="err-add-confirm">
+              Passwords do not match.
+            </div>
+          </div>
+        </form>
+      </div>
 
-        nameError.classList.add('d-none');
-        passError.classList.add('d-none');
-        confirmError.classList.add('d-none');
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary"
+                onclick="submitAdd()">
+          <i class="fas fa-plus me-1"></i> Add
+        </button>
+      </div>
 
-        let isValid = true;
+    </div>
+  </div>
+</div>
 
-        if (!userName) {
-          nameError.classList.remove('d-none');
-          isValid = false;
-        }
+<!-- ══ MODAL: EDIT TECHNICIAN ════════════════════════════════════ -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editModalLabel">
+  <div class="modal-dialog">
+    <div class="modal-content">
 
-        if (newPassword) {
-          const hasLetters = /[a-zA-Z]/.test(newPassword);
-          const hasNumbers = /[0-9]/.test(newPassword);
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">
+          <i class="fas fa-edit me-2" style="color:#1f2558"></i>
+          Edit Technician
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
 
-          if (!hasLetters || !hasNumbers) {
-            passError.classList.remove('d-none');
-            isValid = false;
-          }
+      <div class="modal-body">
+        <form id="editForm" method="post"
+              action="{{ url_for('admin_manage_user') }}"
+              novalidate>
+          <input type="hidden" name="action"  value="edit" />
+          <input type="hidden" name="user_id" id="editId" />
 
-          if (newPassword !== confirmPassword) {
-            confirmError.classList.remove('d-none');
-            isValid = false;
-          }
-        }
+          <div class="mb-3">
+            <label class="form-label">ID</label>
+            <input type="text" class="form-control" id="editIdDisplay"
+                   disabled style="background:#f8fafc;color:#6b7280" />
+          </div>
 
-        return isValid;
-      }
+          <div class="mb-3">
+            <label class="form-label">Username <span style="color:#dc2626">*</span></label>
+            <input type="text" class="form-control" id="editUsername"
+                   name="username" placeholder="Enter username" />
+            <div class="field-error" id="err-edit-name">Username cannot be empty.</div>
+          </div>
 
-      function submitUserAction(userId, action) {
-        document.getElementById('userActionId').value = userId;
-        document.getElementById('userActionType').value = action;
-        document.getElementById('userActionForm').submit();
-      }
+          <!-- FIX: password dengan toggle show/hide -->
+          <div class="mb-3">
+            <label class="form-label">New Password</label>
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="editPassword"
+                     name="password"
+                     placeholder="Leave blank to keep current password" />
+              <button type="button" class="pw-toggle"
+                      onclick="togglePw('editPassword', this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div class="field-error" id="err-edit-pass">
+              Password must contain letters and numbers.
+            </div>
+          </div>
 
-      function confirmDeleteUser(userId) {
-        if (confirm('Delete this user? This action cannot be undone.')) {
-          submitUserAction(userId, 'delete');
-        }
-      }
+          <div class="mb-0">
+            <label class="form-label">Confirm Password</label>
+            <div class="pw-wrap">
+              <input type="password" class="form-control" id="editConfirm"
+                     name="confirm_password" placeholder="Confirm new password" />
+              <button type="button" class="pw-toggle"
+                      onclick="togglePw('editConfirm', this)">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <div class="field-error" id="err-edit-confirm">
+              Passwords do not match.
+            </div>
+          </div>
+        </form>
+      </div>
 
-      document.addEventListener('DOMContentLoaded', function () {
-        document.querySelectorAll('.edit-user-btn').forEach(function (button) {
-          button.addEventListener('click', function () {
-            populateEditUser(this);
-          });
-        });
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary"
+                data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary"
+                onclick="submitEdit()">
+          <i class="fas fa-save me-1"></i> Save Changes
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── SCRIPTS ───────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  /* ── SIDEBAR (mobile) ────────────────────────────────────── */
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('show');
+  }
+
+  /* ── PASSWORD SHOW / HIDE ────────────────────────────────── */
+  /* FIX: toggle visibility per field — tidak ada di template lama */
+  function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type   = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      input.type   = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  }
+
+  /* ── HELPERS ─────────────────────────────────────────────── */
+  function showErr(id, show) {
+    document.getElementById(id).classList.toggle('show', show);
+  }
+
+  function clearErrors(...ids) {
+    ids.forEach(id => document.getElementById(id).classList.remove('show'));
+  }
+
+  function isStrongPassword(pw) {
+    return /[a-zA-Z]/.test(pw) && /[0-9]/.test(pw);
+  }
+
+  /* ── ADD FORM ────────────────────────────────────────────── */
+  function submitAdd() {
+    const id   = document.getElementById('addId').value.trim();
+    const name = document.getElementById('addUsername').value.trim();
+    const pw   = document.getElementById('addPassword').value;
+    const conf = document.getElementById('addConfirm').value;
+
+    clearErrors('err-add-id','err-add-name','err-add-pass','err-add-confirm');
+
+    let valid = true;
+    if (!/^\d+$/.test(id))         { showErr('err-add-id', true);      valid = false; }
+    if (!name)                      { showErr('err-add-name', true);    valid = false; }
+    if (!isStrongPassword(pw))      { showErr('err-add-pass', true);    valid = false; }
+    if (pw !== conf)                { showErr('err-add-confirm', true); valid = false; }
+
+    if (valid) document.getElementById('addForm').submit();
+  }
+
+  /* ── EDIT FORM ───────────────────────────────────────────── */
+  function submitEdit() {
+    const name = document.getElementById('editUsername').value.trim();
+    const pw   = document.getElementById('editPassword').value;
+    const conf = document.getElementById('editConfirm').value;
+
+    clearErrors('err-edit-name','err-edit-pass','err-edit-confirm');
+
+    let valid = true;
+    if (!name) { showErr('err-edit-name', true); valid = false; }
+    if (pw) {
+      if (!isStrongPassword(pw)) { showErr('err-edit-pass', true);    valid = false; }
+      if (pw !== conf)           { showErr('err-edit-confirm', true); valid = false; }
+    }
+
+    if (valid) document.getElementById('editForm').submit();
+  }
+
+  /* ── POPULATE EDIT MODAL ─────────────────────────────────── */
+  /* FIX: satu fungsi terpadu — tidak perlu DOMContentLoaded listener terpisah */
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const uid  = this.dataset.userId;
+        const uname = this.dataset.username;
+        document.getElementById('editId').value         = uid;
+        document.getElementById('editIdDisplay').value  = uid;
+        document.getElementById('editUsername').value   = uname;
+        document.getElementById('editModalLabel').innerHTML =
+          `<i class="fas fa-edit me-2" style="color:#1f2558"></i>Edit — ${uname}`;
+        document.getElementById('editPassword').value  = '';
+        document.getElementById('editConfirm').value   = '';
+        clearErrors('err-edit-name','err-edit-pass','err-edit-confirm');
       });
-    </script>
-  </body>
+    });
+  });
+
+  /* ── ACTION FORM (activate / deactivate / delete) ───────── */
+  function submitAction(userId, action) {
+    document.getElementById('actionId').value   = userId;
+    document.getElementById('actionType').value = action;
+    document.getElementById('actionForm').submit();
+  }
+
+  function confirmDelete(userId, username) {
+    if (confirm(`Delete "${username}"? This cannot be undone.`)) {
+      submitAction(userId, 'delete');
+    }
+  }
+
+  /* ── SEARCH ──────────────────────────────────────────────── */
+  /* FIX: search by data-username attribute — tidak ada di template lama */
+  const searchInput = document.getElementById('searchInput');
+  const emptySearch = document.getElementById('emptySearch');
+  const tableWrap   = document.querySelector('.table-responsive');
+
+  searchInput.addEventListener('input', function() {
+    const term = this.value.toLowerCase().trim();
+    let visible = 0;
+
+    document.querySelectorAll('#tableBody tr[data-username]').forEach(row => {
+      const match = !term || row.dataset.username.includes(term);
+      row.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+
+    const noResult = visible === 0 && term !== '';
+    emptySearch.style.display = noResult ? 'block' : 'none';
+    tableWrap.style.display   = noResult ? 'none'  : '';
+  });
+</script>
+
+</body>
 </html>

@@ -249,6 +249,31 @@
         }
       }
       
+      /* Detection Labels */
+      .detection-label {
+        position: absolute;
+        background: rgba(10, 22, 40, 0.9);
+        border: 1px solid rgba(13, 110, 253, 0.5);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        color: #fff;
+        font-weight: 600;
+        white-space: nowrap;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 0 16px rgba(13, 110, 253, 0.3);
+      }
+      .detection-label .label-title {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--accent-glow);
+        margin-bottom: 2px;
+      }
+      .detection-label .label-value {
+        color: #fff;
+        font-weight: 700;
+      }
+      
       /* FEATURES */
       .features-strip {
         background: var(--bg-card);
@@ -338,8 +363,8 @@
               <i class="bi bi-lightning-charge-fill"></i>
               AI-Powered PCB Defect Detection System
             </div>
-            <h1 class="hero-title">Smarter, Faster,<br />and More Accurate<br />PCB Inspection</h1>
-            <p class="hero-sub">Automatically detect multiple PCB defect types with high accuracy using Convolutional Neural Networks (CNN).</p>
+            <h1 class="hero-title">Smarter, Faster,<br />and More Accurate<br /><span style="color: var(--accent-glow);">PCB Inspection</span></h1>
+            <p class="hero-sub">Automatically detect multiple types of PCB defects with high accuracy using the YOLOv8 object detection model, enabling faster and more reliable inspection.</p>
             <!-- Tombol Login → mengarah ke route /login di Flask -->
             <a href="/login" class="btn-login">Login <i class="bi bi-arrow-right"></i></a>
           </div>
@@ -351,6 +376,19 @@
                 <div class="chip chip-sm1"></div>
                 <div class="chip chip-sm2"></div>
                 <div class="chip chip-sm3"></div>
+                <!-- Detection Labels -->
+                <div class="detection-label" style="top: 8%; right: 12%; z-index: 2;">
+                  <span class="label-title">Solder Bridge</span>
+                  <span class="label-value">0.92</span>
+                </div>
+                <div class="detection-label" style="bottom: 12%; right: 8%; z-index: 2;">
+                  <span class="label-title">Missing Hole</span>
+                  <span class="label-value">0.85</span>
+                </div>
+                <div class="detection-label" style="bottom: 22%; left: 10%; z-index: 2;">
+                  <span class="label-title">Open Circuit</span>
+                  <span class="label-value">0.91</span>
+                </div>
               </div>
             </div>
           </div>
@@ -365,33 +403,33 @@
           <div class="col-md-4">
             <div class="feature-item">
               <div class="feature-icon fi-blue">
-                <i class="bi bi-patch-check-fill"></i>
+                <i class="bi bi-check-circle-fill"></i>
               </div>
               <div>
                 <div class="feature-title">High Accuracy</div>
-                <div class="feature-desc">Achieves over 95% detection accuracy for PCB defect identification.</div>
+                <div class="feature-desc">Achieves over 95% detection accuracy for identifying PCB defects with reliable performance.</div>
               </div>
             </div>
           </div>
           <div class="col-md-4 feat-divider ps-md-5">
             <div class="feature-item">
               <div class="feature-icon fi-cyan">
-                <i class="bi bi-stopwatch-fill"></i>
+                <i class="bi bi-speedometer2"></i>
               </div>
               <div>
-                <div class="feature-title">Fast Process</div>
-                <div class="feature-desc">Analyze PCBs quickly and find defects in seconds.</div>
+                <div class="feature-title">Fast Detection</div>
+                <div class="feature-desc">Inspect PCB in real time, providing detection results within seconds.</div>
               </div>
             </div>
           </div>
           <div class="col-md-4 feat-divider ps-md-5">
             <div class="feature-item">
               <div class="feature-icon fi-ai">
-                <i class="bi bi-robot"></i>
+                <i class="bi bi-diagram-3-fill"></i>
               </div>
               <div>
-                <div class="feature-title">CNN-Powered</div>
-                <div class="feature-desc">Powered by Convolutional Neural Networks for more accurate defect detection.</div>
+                <div class="feature-title">YOLOv8n-Powered</div>
+                <div class="feature-desc">Powered by the YOLOv8 deep learning model for fast, lightweight, and accurate defect detection.</div>
               </div>
             </div>
           </div>

@@ -1,10 +1,8 @@
 from ultralytics import YOLO
 
-model = YOLO(
-    "runs/detect/PCB_Project/YOLOv8n_PCB-5/weights/best.pt"
-)
+model = YOLO("best.pt")
 
-metrics = model.val()
+metrics = model.val(data="data.yaml", split="test")
 
 print("mAP50:", metrics.box.map50)
 print("mAP50-95:", metrics.box.map)

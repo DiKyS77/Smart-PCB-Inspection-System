@@ -4,9 +4,11 @@ val: val/images
 test: test/images
 
 names:
-  0: mouse_bite
-  1: spur
-  2: missing_hole
-  3: short
-  4: open_circuit
-  5: spurious_copper
+  0: missing_resistor
+  1: missing_buzzer
+  2: mouse_bite
+  3: spur
+  4: missing_hole
+  5: short
+  6: open_circuit
+  7: spurious_copper

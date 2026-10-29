@@ -168,6 +168,8 @@
     .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
     .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
     .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
+    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
+    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
     .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
     .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
     .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
@@ -312,14 +314,16 @@
       <!-- Search -->
       <div class="search-wrap">
         <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Search defect type…" />
+        <input type="search" id="searchInput"
+               placeholder="Cari PCB ID atau status tindakan…"
+               aria-label="Cari berdasarkan PCB ID, jenis cacat, atau status tindak lanjut" />
       </div>
     </div>
 
     <!-- Empty state (search) -->
     <div class="empty-state" id="emptySearch">
       <i class="fas fa-search"></i>
-      <p>No records match your search.</p>
+      <p>Tidak ada catatan yang cocok dengan PCB ID atau kata kunci tersebut.</p>
     </div>
 
     <div class="table-responsive" id="tableWrap">
@@ -327,21 +331,29 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>PCB ID</th>
             <th>Image</th>
             <th>File Name</th>
             <th>Date &amp; Time</th>
             <th>Defect Type</th>
             <th>Accuracy</th>    {# FIX: kolom baru — dikirim app.py tapi tidak ada di template lama #}
-            <th>Status</th>      {# FIX: kolom baru — dikirim app.py tapi tidak ada di template lama #}
+            <th>Detection Status</th>
+            <th>Status Tindak Lanjut</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           {% if history_rows %}
             {% for row in history_rows %}
-            <tr data-defect="{{ (row.defect_type or '') | lower }}">
+            <tr data-pcb-id="{{ (row.pcb_id or '') | lower }}"
+                data-defect="{{ (row.defect_type or '') | lower }}"
+                data-follow-up="{{ (row.follow_up_status or 'Belum ditinjau') | lower }}">
 
               <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+
+              <td style="font-family:monospace;font-weight:700">
+                {{ row.pcb_id or '—' }}
+              </td>
 
               <td>
                 {# FIX: pakai row.image_url (hasil get_image_url dari backend),
@@ -402,6 +414,12 @@
               </td>
 
               <td>
+                <span class="badge rounded-pill text-bg-primary">
+                  {{ row.follow_up_status or 'Belum ditinjau' }}
+                </span>
+              </td>
+
+              <td>
                 <a href="{{ url_for('technician_history_detail', detection_id=row.id) }}"
                    class="btn-detail">
                   <i class="fas fa-arrow-right"></i> Detail
@@ -411,7 +429,7 @@
             {% endfor %}
           {% else %}
             <tr id="noDataRow">
-              <td colspan="8" style="text-align:center;padding:44px;color:#94a3b8">
+              <td colspan="10" style="text-align:center;padding:44px;color:#94a3b8">
                 <i class="fas fa-camera"
                    style="display:block;font-size:2.5rem;
                           margin-bottom:12px;color:#cbd5e1"></i>
@@ -458,9 +476,12 @@
     let visible = 0;
 
     getDataRows().forEach(row => {
-      // FIX: search by data-defect attribute, tidak perlu querySelector
-      // yang bisa crash jika td tidak ada
-      const match = !term || row.dataset.defect.includes(term);
+      const searchableFields = [
+        row.dataset.pcbId,
+        row.dataset.defect,
+        row.dataset.followUp
+      ];
+      const match = !term || searchableFields.some(value => value.includes(term));
       row.style.display = match ? '' : 'none';
       if (match) visible++;
     });

@@ -431,13 +431,25 @@
       </div>
       <div>
         <h5>Upload Image</h5>
-        <p>JPG / JPEG / PNG — max 5 MB</p>
+        <p>JPG / JPEG / PNG — max 10 MB</p>
       </div>
     </div>
 
     <form action="/detect" method="POST" enctype="multipart/form-data" id="detectForm">
+      <div class="mb-3">
+        <label for="pcbIdInput" class="form-label fw-semibold">PCB ID</label>
+        <input type="text" class="form-control" id="pcbIdInput" name="pcb_id"
+               value="{{ pcb_id or '' }}" list="existingPcbIds"
+               maxlength="100" placeholder="Contoh: PCB-01" required />
+        <datalist id="existingPcbIds">
+          {% for existing_pcb_id in existing_pcb_ids or [] %}
+          <option value="{{ existing_pcb_id }}"></option>
+          {% endfor %}
+        </datalist>
+      </div>
+
       <div class="upload-zone" id="uploadZone">
-        <input type="file" name="image" id="fileInput" accept=".jpg,.jpeg,.png" required />
+        <input type="file" name="image" id="fileInput" accept=".jpg,.jpeg,.png" />
         <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
         <div class="upload-title">Drag &amp; drop or click to choose</div>
         <div class="upload-sub">Supports JPG, PNG, JPEG</div>
@@ -445,7 +457,7 @@
                 onclick="document.getElementById('fileInput').click()">
           Browse File
         </button>
-        <div class="upload-hint"><i class="fas fa-lock me-1"></i>Max size 5 MB</div>
+        <div class="upload-hint"><i class="fas fa-lock me-1"></i>Max size 10 MB</div>
       </div>
 
       <div id="preview-wrap">
@@ -630,6 +642,10 @@
         <h5 style="font-size:1.05rem;font-weight:700;margin-bottom:16px">
           Defect Type: <span style="color:#1f2558">{{ result or '—' }}</span>
         </h5>
+        <div class="mb-3">
+          <span class="text-muted">PCB ID:</span>
+          <strong>{{ pcb_id }}</strong>
+        </div>
 
         <!-- Defect chips per detection box -->
         {% if detections %}
@@ -808,8 +824,8 @@
       fileInput.value = '';
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Maximum file size is 5 MB.');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Ukuran file maksimal 10 MB.');
       fileInput.value = '';
       return;
     }
@@ -843,6 +859,8 @@
   const processingOverlay = document.getElementById('processingOverlay');
   const processingImage   = document.getElementById('processingImage');
   const processingStatus  = document.getElementById('processingStatus');
+  const pcbIdInput        = document.getElementById('pcbIdInput');
+  const existingPcbIds    = {{ existing_pcb_ids | default([]) | tojson }};
 
   const overlayPipeline = [
     { id: 0, label: 'Uploading image...',         ms: 0    },
@@ -878,10 +896,17 @@
   }
 
   detectForm.addEventListener('submit', function() {
-    if (!fileInput.files.length) return;
-
-    processingImage.src =
-      preview.src || URL.createObjectURL(fileInput.files[0]);
+    const hasUploadedFile = fileInput.files.length > 0;
+    if (hasUploadedFile) {
+      processingImage.src =
+        preview.src || URL.createObjectURL(fileInput.files[0]);
+      processingImage.style.display = '';
+      overlayPipeline[0].label = 'Uploading image...';
+    } else {
+      processingImage.removeAttribute('src');
+      processingImage.style.display = 'none';
+      overlayPipeline[0].label = 'Loading saved PCB image...';
+    }
     processingOverlay.classList.add('show');
     submitBtn.disabled = true;
     submitBtn.innerHTML =

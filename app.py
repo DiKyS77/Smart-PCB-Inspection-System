@@ -17,7 +17,7 @@ import cv2
 import matplotlib
 matplotlib.use('Agg')          # non-interactive backend — wajib di server
 import matplotlib.pyplot as plt
-from flask import Flask, redirect, render_template, request, send_file, session, url_for
+from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
 from openpyxl import Workbook
 from ultralytics import YOLO
 from werkzeug.utils import secure_filename
@@ -38,12 +38,20 @@ NORMALIZE_FOLDER = 'static/normalize'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 DEFECT_TYPES = [
-    'spurious_copper', 'spur', 'mouse_bite',
-    'missing_hole', 'short', 'open_circuit',
+    'missing_resistor', 'missing_buzzer', 'mouse_bite',
+    'spur', 'missing_hole', 'short', 'open_circuit',
+    'spurious_copper',
 ]
 
+FOLLOW_UP_STATUSES = (
+    'Belum ditinjau',
+    'Sedang diperiksa',
+    'Perlu perbaikan',
+    'Selesai',
+)
+
 app.config['UPLOAD_FOLDER']      = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024   # 5 MB
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
 
 for _folder in (UPLOAD_FOLDER, RESULT_FOLDER, NORMALIZE_FOLDER):
     os.makedirs(_folder, exist_ok=True)
@@ -138,13 +146,68 @@ def _migrate():
             CREATE TABLE IF NOT EXISTS detections (
                 id             INT AUTO_INCREMENT PRIMARY KEY,
                 technician_id  INT,
+                pcb_id         VARCHAR(100),
+                source_image_path VARCHAR(255),
                 image_path     VARCHAR(255),
                 defect_type    VARCHAR(100),
                 accuracy       DECIMAL(5,2),
                 status         VARCHAR(50),
+                follow_up_status VARCHAR(40) NOT NULL DEFAULT 'Belum ditinjau',
                 created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME   = 'detections'
+              AND COLUMN_NAME  = 'pcb_id'
+        """)
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                'ALTER TABLE detections ADD COLUMN pcb_id VARCHAR(100) NULL AFTER technician_id'
+            )
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME   = 'detections'
+              AND COLUMN_NAME  = 'source_image_path'
+        """)
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                """ALTER TABLE detections
+                   ADD COLUMN source_image_path VARCHAR(255) NULL AFTER pcb_id"""
+            )
+
+        cursor.execute(
+            """SELECT id, image_path FROM detections
+               WHERE source_image_path IS NULL AND image_path IS NOT NULL"""
+        )
+        for detection_id, image_path in cursor.fetchall():
+            result_filename = os.path.basename(image_path.replace('\\', '/'))
+            if not result_filename.startswith('result_'):
+                continue
+            source_filename = result_filename[len('result_'):]
+            source_path = os.path.join(UPLOAD_FOLDER, source_filename)
+            if os.path.isfile(source_path) and allowed_file(source_filename):
+                cursor.execute(
+                    'UPDATE detections SET source_image_path = %s WHERE id = %s',
+                    (f'/static/uploads/{source_filename}', detection_id),
+                )
+
+        cursor.execute("""
+            SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME   = 'detections'
+              AND COLUMN_NAME  = 'follow_up_status'
+        """)
+        if cursor.fetchone()[0] == 0:
+            cursor.execute(
+                """ALTER TABLE detections
+                   ADD COLUMN follow_up_status VARCHAR(40) NOT NULL
+                   DEFAULT 'Belum ditinjau' AFTER status"""
+            )
         conn.commit()
     except Exception as exc:
         print(f'[migrate] warning: {exc}')
@@ -173,7 +236,7 @@ def _inject_session():
 def _too_large(error):
     return render_template(
         'technician/detection.html',
-        error='File size must be 5 MB or less.'
+        error='Ukuran file maksimal 10 MB.'
     ), 413
 
 
@@ -681,7 +744,25 @@ def technician_dashboard():
 def technician_detection():
     if session.get('role') != 'technician':
         return redirect('/login')
-    return render_template('technician/detection.html')
+
+    conn   = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """SELECT DISTINCT pcb_id FROM detections
+               WHERE technician_id = %s AND pcb_id IS NOT NULL AND pcb_id <> ''
+               ORDER BY pcb_id""",
+            (session.get('user_id'),),
+        )
+        existing_pcb_ids = [row[0] for row in cursor.fetchall()]
+    finally:
+        cursor.close()
+        conn.close()
+
+    return render_template(
+        'technician/detection.html',
+        existing_pcb_ids=existing_pcb_ids,
+    )
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -718,26 +799,105 @@ def detect():
     if session.get('role') != 'technician':
         return redirect('/login')
 
-    # ── validate upload ──────────────────────────────────────────────────────
-    file = request.files.get('image')
-    if not file or file.filename == '':
-        return render_template('technician/detection.html',
-                               error='Please select an image file first.')
-    if not allowed_file(file.filename):
-        return render_template('technician/detection.html',
-                               error='Unsupported file type. Use PNG, JPG, or JPEG.')
+    pcb_id = request.form.get('pcb_id', '').strip().upper()
+    if not pcb_id:
+        return render_template(
+            'technician/detection.html',
+            error='Please enter a PCB ID.',
+            pcb_id=pcb_id,
+        )
+    if len(pcb_id) > 100:
+        return render_template(
+            'technician/detection.html',
+            error='PCB ID must be 100 characters or fewer.',
+            pcb_id=pcb_id,
+        )
 
-    # ── save original upload ─────────────────────────────────────────────────
-    filename = unique_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-    original_image = f'/static/uploads/{filename}'
+    # ── keep each PCB ID tied to its first registered original image ─────────
+    file = request.files.get('image')
+    conn = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """SELECT source_image_path FROM detections
+               WHERE technician_id = %s AND pcb_id = %s
+                 AND source_image_path IS NOT NULL
+               ORDER BY id ASC LIMIT 1""",
+            (session.get('user_id'), pcb_id),
+        )
+        registered_image = cursor.fetchone()
+        if not registered_image:
+            cursor.execute(
+                """SELECT id FROM detections
+                   WHERE technician_id = %s AND pcb_id = %s LIMIT 1""",
+                (session.get('user_id'), pcb_id),
+            )
+            existing_pcb = cursor.fetchone()
+        else:
+            existing_pcb = None
+    finally:
+        cursor.close()
+        conn.close()
+
+    if registered_image:
+        if file and file.filename:
+            return render_template(
+                'technician/detection.html',
+                error='PCB ID ini sudah terdaftar. Hapus file yang dipilih agar deteksi memakai gambar awal yang tersimpan untuk ID ini.',
+                pcb_id=pcb_id,
+            )
+
+        source_image_path = registered_image[0]
+        source_filename = os.path.basename(source_image_path.replace('\\', '/'))
+        if (
+            source_image_path != f'/static/uploads/{source_filename}'
+            or not allowed_file(source_filename)
+        ):
+            return render_template(
+                'technician/detection.html',
+                error='Path gambar tersimpan tidak valid. Unggah gambar kembali.',
+                pcb_id=pcb_id,
+            )
+
+        filename = unique_filename(source_filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], source_filename)
+        if not os.path.isfile(filepath):
+            return render_template(
+                'technician/detection.html',
+                error='Gambar asli PCB tidak ditemukan. Unggah gambar kembali.',
+                pcb_id=pcb_id,
+            )
+    elif existing_pcb:
+        return render_template(
+            'technician/detection.html',
+            error='PCB ID ini sudah digunakan, tetapi gambar aslinya tidak tersedia. Gunakan ID PCB baru atau pulihkan gambar aslinya.',
+            pcb_id=pcb_id,
+        )
+    elif file and file.filename:
+        if not allowed_file(file.filename):
+            return render_template('technician/detection.html',
+                                   error='Unsupported file type. Use PNG, JPG, or JPEG.',
+                                   pcb_id=pcb_id)
+
+        filename = unique_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        source_image_path = f'/static/uploads/{filename}'
+    else:
+        return render_template(
+            'technician/detection.html',
+            error='Pilih gambar untuk mendaftarkan PCB ID baru.',
+            pcb_id=pcb_id,
+        )
+
+    original_image = source_image_path
 
     # ── read image ───────────────────────────────────────────────────────────
     img = cv2.imread(filepath)
     if img is None:
         return render_template('technician/detection.html',
-                               error='Could not read the uploaded image.')
+                               error='Could not read the uploaded image.',
+                               pcb_id=pcb_id)
     height, width = img.shape[:2]
 
     # ── step 1: resize 640×640 ───────────────────────────────────────────────
@@ -758,7 +918,8 @@ def detect():
     except Exception as exc:
         print(f'[detect] model error: {exc}')
         return render_template('technician/detection.html',
-                               error='Detection failed. Please try again.')
+                               error='Detection failed. Please try again.',
+                               pcb_id=pcb_id)
 
     # ── step 4: feature map ──────────────────────────────────────────────────
     feature_image = _save_feature_map(filename)
@@ -812,13 +973,20 @@ def detect():
     try:
         cursor.execute(
             """INSERT INTO detections
-               (technician_id, image_path, defect_type, accuracy, status)
-               VALUES (%s, %s, %s, %s, %s)""",
-            (session.get('user_id'), result_image, defect_type, accuracy, status),
+               (technician_id, pcb_id, source_image_path, image_path,
+                defect_type, accuracy, status)
+               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+            (session.get('user_id'), pcb_id, source_image_path, result_image,
+             defect_type, accuracy, status),
         )
         conn.commit()
     except Exception as exc:
         print(f'[detect] db insert error: {exc}')
+        return render_template(
+            'technician/detection.html',
+            error='Detection completed, but the result could not be saved.',
+            pcb_id=pcb_id,
+        ), 500
     finally:
         cursor.close()
         conn.close()
@@ -827,6 +995,7 @@ def detect():
     return render_template(
         'technician/detection.html',
         original_image=original_image,
+        pcb_id=pcb_id,
         resize_image=resize_image,
         normalize_image=normalize_image,
         feature_image=feature_image,
@@ -859,7 +1028,8 @@ def technician_history():
     cursor  = conn.cursor(dictionary=True)
     try:
         cursor.execute(
-            """SELECT id, image_path, defect_type, accuracy, status, created_at
+            """SELECT id, pcb_id, image_path, defect_type, accuracy, status,
+                      follow_up_status, created_at
                FROM detections WHERE technician_id = %s
                ORDER BY created_at DESC""",
             (tech_id,),
@@ -887,7 +1057,8 @@ def technician_history_detail(detection_id):
     cursor  = conn.cursor(dictionary=True)
     try:
         cursor.execute(
-            """SELECT id, image_path, defect_type, accuracy, status, created_at
+            """SELECT id, pcb_id, image_path, defect_type, accuracy, status,
+                      follow_up_status, created_at
                FROM detections WHERE id = %s AND technician_id = %s""",
             (detection_id, tech_id),
         )
@@ -902,7 +1073,49 @@ def technician_history_detail(detection_id):
         cursor.close()
         conn.close()
 
-    return render_template('technician/detail.html', detection=detection)
+    return render_template(
+        'technician/detail.html',
+        detection=detection,
+        follow_up_statuses=FOLLOW_UP_STATUSES,
+    )
+
+
+@app.route('/technician/history/<int:detection_id>/follow-up', methods=['POST'])
+def update_follow_up_status(detection_id):
+    if session.get('role') != 'technician':
+        return redirect('/login')
+
+    follow_up_status = request.form.get('follow_up_status', '').strip()
+    if follow_up_status not in FOLLOW_UP_STATUSES:
+        flash('Status tindak lanjut tidak valid.', 'danger')
+        return redirect(url_for('technician_history_detail', detection_id=detection_id))
+
+    conn   = get_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            'SELECT id FROM detections WHERE id = %s AND technician_id = %s',
+            (detection_id, session.get('user_id')),
+        )
+        if cursor.fetchone() is None:
+            conn.rollback()
+            flash('Inspeksi tidak ditemukan atau tidak dapat diakses.', 'danger')
+        else:
+            cursor.execute(
+                """UPDATE detections SET follow_up_status = %s
+                   WHERE id = %s AND technician_id = %s""",
+                (follow_up_status, detection_id, session.get('user_id')),
+            )
+            conn.commit()
+            flash('Status tindak lanjut berhasil diperbarui.', 'success')
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+    return redirect(url_for('technician_history_detail', detection_id=detection_id))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -930,7 +1143,8 @@ def technician_report():
 
     # Build query
     base_sql = """
-        SELECT id, image_path, defect_type, accuracy, status, created_at
+        SELECT id, pcb_id, image_path, defect_type, accuracy, status,
+               follow_up_status, created_at
         FROM detections WHERE technician_id = %s
     """
     params: list = [tech_id]
@@ -967,13 +1181,18 @@ def technician_report():
             wb = Workbook()
             ws = wb.active
             ws.title = 'Report'
-            ws.append(['ID', 'Defect Type', 'Accuracy', 'Status', 'Date', 'File Name'])
+            ws.append([
+                'Inspection ID', 'PCB ID', 'Defect Type', 'Accuracy',
+                'Detection Status', 'Follow-up Status', 'Date', 'File Name',
+            ])
             for row in report_rows:
                 ws.append([
                     row['id'],
+                    row.get('pcb_id') or '',
                     row.get('defect_type') or 'No Defect',
                     row['accuracy'],
                     row['status'],
+                    row['follow_up_status'],
                     row['created_at'],
                     os.path.basename(row['image_path']) if row['image_path'] else '',
                 ])

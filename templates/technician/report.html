@@ -354,6 +354,8 @@
     .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
     .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
     .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
+    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
+    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
     .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
     .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
     .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
@@ -697,12 +699,14 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>PCB ID</th>
             <th>Image</th>
             <th>File Name</th>
             <th>Date &amp; Time</th>
             <th>Defect Type</th>
             <th>Accuracy</th>
-            <th>Status</th>
+            <th>Detection Status</th>
+            <th>Status Tindak Lanjut</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -710,6 +714,7 @@
             {% for row in report_rows %}
             <tr>
               <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+              <td style="font-family:monospace;font-weight:700">{{ row.pcb_id or '—' }}</td>
 
               <td>
                 {# FIX: pakai row.image_url (sudah diproses get_image_url di backend)
@@ -766,11 +771,16 @@
                   {{ row.status or 'NORMAL' }}
                 </span>
               </td>
+              <td>
+                <span class="badge rounded-pill text-bg-primary">
+                  {{ row.follow_up_status or 'Belum ditinjau' }}
+                </span>
+              </td>
             </tr>
             {% endfor %}
           {% else %}
             <tr class="empty-row">
-              <td colspan="7">
+              <td colspan="9">
                 <i class="fas fa-inbox"
                    style="display:block;font-size:2.5rem;
                           margin-bottom:10px;color:#cbd5e1"></i>

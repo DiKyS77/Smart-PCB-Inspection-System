@@ -194,6 +194,8 @@
     .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
     .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
     .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
+    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
+    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
     .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
     .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
     .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
@@ -286,6 +288,15 @@
 <!-- ── MAIN ─────────────────────────────────────────────────────── -->
 <main class="main">
 
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+      {{ message }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+
   <!-- Page heading + navigation actions -->
   <div class="page-heading">
     <div>
@@ -301,6 +312,39 @@
         <i class="fas fa-camera"></i> Detect Again
       </a>
     </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">
+      <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div>
+        <h5>Status Tindak Lanjut</h5>
+        <p>Status ini diperbarui oleh teknisi dan terpisah dari hasil deteksi AI.</p>
+      </div>
+    </div>
+
+    <form method="POST"
+          action="{{ url_for('update_follow_up_status', detection_id=detection.id) }}"
+          class="row g-3 align-items-end">
+      <div class="col-md-8">
+        <label for="followUpStatus" class="form-label fw-semibold">Pilih status</label>
+        <select class="form-select" id="followUpStatus" name="follow_up_status" required>
+          {% for follow_up_status in follow_up_statuses %}
+          <option value="{{ follow_up_status }}"
+                  {% if detection.follow_up_status == follow_up_status %}selected{% endif %}>
+            {{ follow_up_status }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <button type="submit" class="btn btn-primary rounded-pill px-4">
+          <i class="fas fa-save me-2"></i>Simpan Status
+        </button>
+      </div>
+    </form>
   </div>
 
   <!-- ══ MAIN DETAIL PANEL ═════════════════════════════════════ -->
@@ -351,6 +395,13 @@
         </div>
 
         <div class="info-row">
+          <span class="info-key"><i class="fas fa-microchip me-1"></i>PCB ID</span>
+          <span class="info-val">
+            <span class="id-badge">{{ detection.pcb_id or '—' }}</span>
+          </span>
+        </div>
+
+        <div class="info-row">
           <span class="info-key"><i class="fas fa-file me-1"></i>File Name</span>
           <span class="info-val"
                 style="font-size:0.78rem;color:#6b7280;word-break:break-all"
@@ -394,6 +445,11 @@
               {{ detection.status or 'NORMAL' }}
             </span>
           </span>
+        </div>
+
+        <div class="info-row">
+          <span class="info-key"><i class="fas fa-tasks me-1"></i>Status Tindak Lanjut</span>
+          <span class="info-val">{{ detection.follow_up_status or 'Belum ditinjau' }}</span>
         </div>
 
         <div class="info-row">

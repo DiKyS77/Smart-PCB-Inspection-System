@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "checks": [
+    "Admin overview, technician detail and cross-user isolation",
+    "PCB type assignment and completion blocked before verification",
+    "Technician correction visible to admin; AI original remains intact",
+    "Filtered CSV, repeat inspection remains one unit and reopens work; latest review required",
+    "Audit events and CSRF protection"
+  ],
+  "temporary_data_rolled_back": true,
+  "counts_before": {
+    "users": 2,
+    "detections": 3,
+    "detection_history": 3,
+    "detection_objects": 7,
+    "inspection_images": 411,
+    "pcb_types": 0,
+    "pcb_work_units": 3,
+    "pcb_inspection_reviews": 0,
+    "pcb_work_events": 0
+  },
+  "counts_after": {
+    "users": 2,
+    "detections": 3,
+    "detection_history": 3,
+    "detection_objects": 7,
+    "inspection_images": 411,
+    "pcb_types": 0,
+    "pcb_work_units": 3,
+    "pcb_inspection_reviews": 0,
+    "pcb_work_events": 0
+  }
+}

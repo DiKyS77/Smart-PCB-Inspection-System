@@ -1,535 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — PCB Defect Detection</title>
+  <title>{{ _("Dashboard — PCB Defect Detection") }}</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #eef3fb;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────── */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 240px;
-      background: #1f2558;
-      color: #eef3fb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 28px 22px;
-      z-index: 200;
-      transition: left 0.25s ease;
-    }
-
-    .sidebar .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .sidebar .logo i {
-      background: #37d08f;
-      color: #0f172a;
-      padding: 10px;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    .sidebar .menu a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #d6d8ef;
-      padding: 11px 14px;
-      border-radius: 12px;
-      text-decoration: none;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
-
-    .sidebar .menu a.active {
-      background: rgba(255,255,255,0.07);
-      color: #fff;
-      border-left: 3px solid #37d08f;
-      padding-left: 11px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-info { font-size: 12px; line-height: 1.5; }
-
-    /* ── MAIN ────────────────────────────────────────────────── */
-    .main {
-      margin-left: 240px;
-      padding: 32px 32px 48px;
-    }
-
-    .page-heading {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-
-    .menu-toggle {
-      display: none;
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      cursor: pointer;
-      color: #1f2558;
-      padding: 4px 8px;
-      border-radius: 8px;
-      transition: background 0.15s;
-    }
-
-    .menu-toggle:hover { background: #e2e8f0; }
-
-    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
-    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
-
-    /* ── PANEL ───────────────────────────────────────────────── */
-    .panel {
-      background: #fff;
-      border-radius: 20px;
-      padding: 24px 28px;
-      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .panel-header .icon-badge {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
-
-    /* ── STAT CARDS ──────────────────────────────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: #fff;
-      border-radius: 18px;
-      padding: 22px 24px;
-      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-
-    .stat-icon {
-      width: 50px; height: 50px;
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem; flex-shrink: 0;
-    }
-
-    .stat-label {
-      font-size: 0.75rem;
-      color: #6b7280;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 1.9rem;
-      font-weight: 800;
-      color: #1e293b;
-      line-height: 1;
-    }
-
-    .stat-value.sm { font-size: 1.05rem; line-height: 1.3; }
-    .stat-sub { font-size: 0.76rem; color: #94a3b8; margin-top: 4px; }
-
-    /* ── DEFECT SUMMARY CARDS ────────────────────────────────── */
-    .summary-scroll {
-      display: flex;
-      gap: 14px;
-      overflow-x: auto;
-      padding-bottom: 6px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(15,23,42,0.15) transparent;
-    }
-
-    .summary-scroll::-webkit-scrollbar { height: 6px; }
-    .summary-scroll::-webkit-scrollbar-thumb {
-      background: rgba(15,23,42,0.15);
-      border-radius: 999px;
-    }
-
-    .summary-item {
-      flex: 0 0 200px;
-      border-radius: 16px;
-      padding: 18px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      border: 1px solid transparent;
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-
-    .summary-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(15,23,42,0.1);
-    }
-
-    .summary-item-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .summary-item h6 {
-      margin: 0;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #1e293b;
-      text-transform: capitalize;
-    }
-
-    .summary-type-icon {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .summary-value {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: #1e293b;
-      line-height: 1;
-    }
-
-    .summary-pct { font-size: 0.78rem; font-weight: 700; }
-
-    .summary-bar-track {
-      height: 4px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.08);
-      overflow: hidden;
-    }
-
-    .summary-bar-fill {
-      height: 100%;
-      border-radius: 999px;
-    }
-
-    .summary-empty {
-      padding: 32px; text-align: center;
-      color: #94a3b8; width: 100%;
-    }
-
-    /* ── CHARTS + INSIGHT GRID ───────────────────────────────── */
-    .charts-insight-grid {
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-
-    .chart-box {
-      height: 300px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .insight-list { display: grid; gap: 12px; }
-
-    .insight-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      background: #f8fafc;
-      border-radius: 14px;
-      padding: 16px;
-    }
-
-    .insight-icon {
-      width: 40px; height: 40px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.95rem; flex-shrink: 0;
-    }
-
-    .insight-item h6 {
-      margin: 0 0 4px;
-      font-size: 0.88rem;
-      font-weight: 700;
-    }
-
-    .insight-item span { font-size: 0.82rem; color: #6b7280; }
-
-    /* ── TABLE ───────────────────────────────────────────────── */
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .report-table thead tr { border-bottom: 2px solid #f1f5f9; }
-
-    .report-table th {
-      padding: 11px 14px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      text-align: left;
-    }
-
-    .report-table tbody tr {
-      border-bottom: 1px solid #f8fafc;
-      transition: background 0.1s;
-    }
-
-    .report-table tbody tr:hover { background: #f8fafc; }
-
-    .report-table td {
-      padding: 13px 14px;
-      font-size: 0.86rem;
-      color: #374151;
-      vertical-align: middle;
-    }
-
-    .td-thumb {
-      width: 64px; height: 46px;
-      object-fit: contain; border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      background: #0f172a; display: block;
-    }
-
-    .td-thumb-empty {
-      width: 64px; height: 46px;
-      border-radius: 8px; border: 1px solid #e2e8f0;
-      background: #f1f5f9;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1;
-    }
-
-    /* Defect badges — identical to history.html & report.html */
-    .defect-badge {
-      display: inline-block;
-      padding: 4px 10px; border-radius: 999px;
-      font-size: 0.75rem; font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
-    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
-    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
-    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
-    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
-    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
-    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
-    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
-    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
-
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 10px; border-radius: 999px;
-      font-size: 0.75rem; font-weight: 700;
-    }
-
-    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
-    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
-
-    .acc-wrap { min-width: 70px; }
-    .acc-num  { font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
-    .acc-track {
-      height: 5px; border-radius: 999px;
-      background: #e5e7eb; overflow: hidden;
-    }
-    .acc-fill {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-    }
-
-    .empty-row td {
-      text-align: center; padding: 40px; color: #94a3b8;
-    }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
-    @media (max-width: 1100px) {
-      .charts-insight-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 991px) {
-      .sidebar { left: -240px; }
-      .sidebar.show { left: 0; }
-      .main { margin-left: 0; padding: 20px 16px 40px; }
-      .menu-toggle { display: block; }
-    }
-
-    @media (max-width: 767px) {
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-    }
-
-    @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% include 'shared/i18n.html' %}
 </head>
-<body>
+<body class="view-technician-dashboard">
 
-<!-- SIDEBAR -->
-<div id="sidebar" class="sidebar">
-  <div>
-    <div class="logo">
-      <i class="fas fa-microchip"></i>
-      <span>PCB Defect<br>Detection</span>
-    </div>
-    <div class="menu">
-      <a href="{{ url_for('technician_dashboard') }}" class="active">
-        <i class="fas fa-home"></i> Dashboard
-      </a>
-      <a href="{{ url_for('technician_detection') }}">
-        <i class="fas fa-camera"></i> Detection
-      </a>
-      <a href="{{ url_for('technician_history') }}">
-        <i class="fas fa-clock"></i> History
-      </a>
-      <a href="{{ url_for('technician_report') }}">
-        <i class="fas fa-file-alt"></i> Report
-      </a>
-    </div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="dropdown">
-      <a href="#" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
-      </a>
-      <ul class="dropdown-menu">
-        <li>
-          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">Settings</a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="/logout">Logout</a>
-        </li>
-      </ul>
-    </div>
-    <div class="user-info">
-      <div style="font-weight:600">{{ username or 'User' }}</div>
-      <div style="color:#94a3b8">{{ role or 'Technician' }}</div>
-    </div>
-  </div>
-</div>
+{% include 'shared/sidebar.html' %}
 
-<!-- MAIN -->
 <main class="main">
+  {% include 'shared/workspace_context.html' %}
 
-  <!-- Page heading -->
   <div class="page-heading">
-    <button class="menu-toggle" onclick="toggleSidebar()">
-      <i class="fas fa-bars"></i>
-    </button>
+
     <div>
-      <h2>Dashboard</h2>
-      <p>Overview of your PCB defect detection activity.</p>
+      <h2>{{ _("Your inspections") }}</h2>
+      <p>{{ _("Overview of your PCB defect detection activity.") }}</p>
     </div>
   </div>
 
-  <!-- 1. STAT CARDS -->
   <div class="stats-grid">
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4;color:#16a34a">
+      <div class="stat-icon" >
         <i class="fas fa-chart-line"></i>
       </div>
       <div>
-        <div class="stat-label">Total Detections</div>
-        <div class="stat-value">{{ total_detections }}</div>
-        <div class="stat-sub">All time</div>
+        <div class="stat-label">{{ _("Total Detections") }}</div>
+        <div class="stat-value">{{ _(total_detections) }}</div>
+        <div class="stat-sub">{{ _("All time") }}</div>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef2f2;color:#dc2626">
+      <div class="stat-icon" >
         <i class="fas fa-exclamation-triangle"></i>
       </div>
       <div>
-        <div class="stat-label">Top Defect</div>
-        <div class="stat-value sm">{{ top_defect }}</div>
-        <div class="stat-sub">Most frequent type</div>
-      </div>
-    </div>
-
-    <div class="stat-card">
-      <div class="stat-icon" style="background:#eff6ff;color:#2563eb">
-        <i class="fas fa-shield-alt"></i>
-      </div>
-      <div>
-        <div class="stat-label">Avg Confidence</div>
-        <div class="stat-value">{{ avg_accuracy }}%</div>
-        <div class="stat-sub">Model accuracy</div>
+        <div class="stat-label">{{ _("Top Defect") }}</div>
+        <div class="stat-value sm">{{ _(top_defect | replace('_', ' ')) }}</div>
+        <div class="stat-sub">{{ _("Most frequent type") }}</div>
       </div>
     </div>
 
   </div>
 
-  <!-- 2. DEFECT SUMMARY CARDS
-       FIX: ganti if-elif verbose 30 baris dengan ns.COLORS lookup via loop.index0
-  -->
   <div class="panel">
     <div class="panel-header">
       <div class="icon-badge" style="background:#fefce8;color:#ca8a04">
         <i class="fas fa-layer-group"></i>
       </div>
       <div>
-        <h5>Defect Summary</h5>
-        <p>Count and percentage per defect type</p>
+        <h5>{{ _("Defect Summary") }}</h5>
+        <p>{{ _("Count and percentage per defect type") }}</p>
       </div>
     </div>
 
     {% if defect_summary %}
     <div class="summary-scroll">
       {%- set ns = namespace(
-          colors=['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'],
+          colors=['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'],
           icons=['fa-microchip','fa-bolt','fa-mouse','fa-search','fa-plug','fa-exclamation-circle'],
           bgs=['rgba(239,68,68,0.1)','rgba(249,115,22,0.1)','rgba(59,130,246,0.1)',
                'rgba(139,92,246,0.1)','rgba(34,197,94,0.1)','rgba(14,165,233,0.1)']
@@ -537,17 +76,17 @@
       {% for item in defect_summary %}
       {%- set ci = loop.index0 % 6 -%}
       <div class="summary-item"
-           style="background:{{ ns.bgs[ci] }};border-color:{{ ns.colors[ci] }}33">
+           style="border-color:{{ ns.colors[ci] }}33">
         <div class="summary-item-header">
-          <h6>{{ item.defect_type | replace('_',' ') }}</h6>
+          <h6>{{ _(item.defect_type | replace('_',' ')) }}</h6>
           <div class="summary-type-icon"
                style="background:{{ ns.colors[ci] }}22;color:{{ ns.colors[ci] }}">
             <i class="fas {{ ns.icons[ci] }}"></i>
           </div>
         </div>
-        <div class="summary-value">{{ item.count }}</div>
+        <div class="summary-value">{{ _(item.count) }}</div>
         <div class="summary-pct" style="color:{{ ns.colors[ci] }}">
-          {{ item.percent }}%
+          {{ _(item.percent) }}%
         </div>
         <div class="summary-bar-track">
           <div class="summary-bar-fill"
@@ -560,23 +99,21 @@
     <div class="summary-empty">
       <i class="fas fa-inbox"
          style="font-size:2rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
-      No defect data yet. Run a detection to see the breakdown here.
+      {{ _("No defect data yet. Run a detection to see the breakdown here.") }}
     </div>
     {% endif %}
   </div>
 
-  <!-- 3. CHART + INSIGHT -->
   <div class="charts-insight-grid">
 
-    <!-- Doughnut chart -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#fef2f2;color:#dc2626">
           <i class="fas fa-chart-pie"></i>
         </div>
         <div>
-          <h5>Defect Distribution</h5>
-          <p>Percentage breakdown of each defect type</p>
+          <h5>{{ _("Defect Distribution") }}</h5>
+          <p>{{ _("Percentage breakdown of each defect type") }}</p>
         </div>
       </div>
 
@@ -588,20 +125,19 @@
       <div style="text-align:center;padding:48px;color:#94a3b8">
         <i class="fas fa-chart-pie"
            style="font-size:2.5rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
-        No data to display yet.
+        {{ _("No data to display yet.") }}
       </div>
       {% endif %}
     </div>
 
-    <!-- Insight panel — dinamis dari data, bukan hardcoded -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#f0fdf4;color:#16a34a">
           <i class="fas fa-lightbulb"></i>
         </div>
         <div>
-          <h5>Insights</h5>
-          <p>Key observations from your detection history</p>
+          <h5>{{ _("Insights") }}</h5>
+          <p>{{ _("Key observations from your detection history") }}</p>
         </div>
       </div>
 
@@ -613,13 +149,13 @@
             <i class="fas fa-exclamation-triangle"></i>
           </div>
           <div>
-            <h6>Most common defect</h6>
+            <h6>{{ _("Most common defect") }}</h6>
             <span>
               {% if top_defect != 'N/A' %}
-                <strong>{{ top_defect | replace('_',' ') }}</strong>
-                is the most frequent defect in your detections.
+                <strong>{{ _(top_defect | replace('_',' ')) }}</strong>
+                {{ _("is the most frequent defect in your detections.") }}
               {% else %}
-                No defect data available yet.
+                {{ _("No defect data available yet.") }}
               {% endif %}
             </span>
           </div>
@@ -627,36 +163,19 @@
 
         <div class="insight-item">
           <div class="insight-icon"
-               style="background:rgba(59,130,246,0.1);color:#2563eb">
-            <i class="fas fa-shield-alt"></i>
-          </div>
-          <div>
-            <h6>Model confidence</h6>
-            <span>
-              Average AI confidence is
-              <strong>{{ avg_accuracy }}%</strong>
-              across
-              <strong>{{ total_detections }}</strong>
-              detection{{ 's' if total_detections != 1 }}.
-            </span>
-          </div>
-        </div>
-
-        <div class="insight-item">
-          <div class="insight-icon"
-               style="background:rgba(139,92,246,0.1);color:#8b5cf6">
+               style="background:rgba(139,92,246,0.1);color:#b3a19f">
             <i class="fas fa-layer-group"></i>
           </div>
           <div>
-            <h6>Defect types found</h6>
+            <h6>{{ _("Defect types found") }}</h6>
             <span>
               {%- set active_defects = defect_summary | selectattr('count','gt',0) | list -%}
               {% if active_defects %}
-                <strong>{{ active_defects | length }}</strong>
-                type{{ 's' if active_defects|length != 1 }}
-                detected out of 6 possible.
+                <strong>{{ _(active_defects | length) }}</strong>
+                {{ _("type") }}{{ _('s' if active_defects|length != 1) }}
+                {{ _("detected in your inspection history.") }}
               {% else %}
-                No defects recorded yet.
+                {{ _("No defects recorded yet.") }}
               {% endif %}
             </span>
           </div>
@@ -668,15 +187,15 @@
             <i class="fas fa-clock"></i>
           </div>
           <div>
-            <h6>Latest detection</h6>
+            <h6>{{ _("Latest detection") }}</h6>
             <span>
               {% if recent_detections %}
-                Last run on
+                {{ _("Last run on") }}
                 <strong>
-                  {{ recent_detections[0].created_at.strftime('%d %b %Y') }}
+                  {{ _(recent_detections[0].created_at.strftime('%d %b %Y')) }}
                 </strong>.
               {% else %}
-                No detections yet.
+                {{ _("No detections yet.") }}
               {% endif %}
             </span>
           </div>
@@ -686,7 +205,6 @@
     </div>
   </div>
 
-  <!-- 4. RECENT DETECTIONS TABLE -->
   <div class="panel">
     <div class="panel-header" style="flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:10px;flex:1">
@@ -694,17 +212,17 @@
           <i class="fas fa-table"></i>
         </div>
         <div>
-          <h5>Recent Detections</h5>
-          <p>Last 6 detection results</p>
+          <h5>{{ _("Recent Detections") }}</h5>
+          <p>{{ _("Last 6 detection results") }}</p>
         </div>
       </div>
       <a href="{{ url_for('technician_history') }}"
          style="display:inline-flex;align-items:center;gap:6px;
                 padding:8px 16px;border-radius:10px;font-size:0.84rem;
                 font-weight:600;text-decoration:none;
-                background:#f1f5f9;color:#1f2558;
+                background:#f1f5f9;color:#668464;
                 border:1px solid #e2e8f0">
-        <i class="fas fa-arrow-right"></i> View All
+        <i class="fas fa-arrow-right"></i> {{ _("View All") }}
       </a>
     </div>
 
@@ -713,27 +231,25 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Image</th>
-            <th>File Name</th>
-            <th>Date &amp; Time</th>
-            <th>Defect Type</th>
-            <th>Accuracy</th>
-            <th>Status</th>
+            <th>{{ _("Image") }}</th>
+            <th>{{ _("File Name") }}</th>
+            <th>{{ _("Date") }} &amp; {{ _("Time") }}</th>
+            <th>{{ _("Defect Type") }}</th>
+            <th>{{ _("Status") }}</th>
           </tr>
         </thead>
         <tbody>
           {% if recent_detections %}
             {% for row in recent_detections %}
             <tr>
-              <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+              <td style="font-weight:700;color:#94a3b8">{{ _(loop.index) }}</td>
 
               <td>
-                {# FIX: pakai row.image_url (hasil get_image_url dari backend),
-                         BUKAN row.image_path yang bisa salah path #}
+
                 {% if row.image_url %}
                   <img class="td-thumb"
                        src="{{ row.image_url }}"
-                       alt="{{ row.defect_type }}" />
+                       alt="{{ _(row.defect_type) }}" />
                 {% else %}
                   <div class="td-thumb-empty">
                     <i class="fas fa-image"></i>
@@ -744,60 +260,50 @@
               <td style="font-size:0.8rem;color:#6b7280;
                          max-width:130px;overflow:hidden;
                          text-overflow:ellipsis;white-space:nowrap"
-                  title="{{ row.file_name or '-' }}">
-                {{ row.file_name or 'N/A' }}
+                  title="{{ row.file_name or _('-') }}">
+                {{ row.file_name or _('N/A') }}
               </td>
 
               <td>
-                {# FIX: guard None agar tidak crash jika created_at kosong #}
+
                 <div style="font-size:0.85rem;font-weight:600">
-                  {{ row.created_at.strftime('%d %b %Y') if row.created_at else '—' }}
+                  {{ _(row.created_at.strftime('%d %b %Y') if row.created_at else '—') }}
                 </div>
                 <div style="font-size:0.76rem;color:#94a3b8">
-                  {{ row.created_at.strftime('%H:%M:%S') if row.created_at else '' }}
+                  {{ _(row.created_at.strftime('%H:%M:%S') if row.created_at else '') }}
                 </div>
               </td>
 
               <td>
-                {# FIX: defect-badge konsisten dengan history.html & report.html #}
+
                 <span class="defect-badge
                   defect-{{ (row.defect_type or 'no-defect') | replace('_','-') }}">
-                  {{ row.defect_type or 'No Defect' }}
+                  {{ _(row.defect_type or 'No Defect') }}
                 </span>
               </td>
 
               <td>
-                {# FIX: kolom accuracy sebelumnya tidak ada sama sekali #}
-                <div class="acc-wrap">
-                  <div class="acc-num">{{ row.accuracy or 0 }}%</div>
-                  <div class="acc-track">
-                    <div class="acc-fill" style="width:{{ row.accuracy or 0 }}%"></div>
-                  </div>
-                </div>
-              </td>
 
-              <td>
-                {# FIX: kolom status sebelumnya tidak ada sama sekali #}
                 <span class="status-pill
                   {{ 'defect' if row.status == 'DEFECT' else 'normal' }}">
                   <i class="fas fa-{{ 'exclamation-circle'
                      if row.status == 'DEFECT' else 'check-circle' }}"></i>
-                  {{ row.status or 'NORMAL' }}
+                  {{ _(row.status or 'NORMAL') }}
                 </span>
               </td>
             </tr>
             {% endfor %}
           {% else %}
             <tr class="empty-row">
-              <td colspan="7">
+              <td colspan="6">
                 <i class="fas fa-camera"
                    style="display:block;font-size:2.5rem;
                           margin-bottom:12px;color:#cbd5e1"></i>
-                No detections yet.
+                {{ _("No detections yet.") }}
                 <a href="{{ url_for('technician_detection') }}"
                    style="display:block;margin-top:10px;
-                          color:#1f2558;font-weight:600;text-decoration:none">
-                  Run your first detection →
+                          color:#668464;font-weight:600;text-decoration:none">
+                  {{ _("Run your first detection →") }}
                 </a>
               </td>
             </tr>
@@ -809,25 +315,20 @@
 
 </main>
 
-<!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   /* Sidebar toggle */
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('show');
-  }
 
-  /* FIX: palette konsisten dengan semua halaman lain di project ini */
-  const PALETTE = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'];
+  const PALETTE = ['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'];
 
   const chartEl = document.getElementById('defectChart');
   if (chartEl) {
     new Chart(chartEl, {
       type: 'doughnut',
       data: {
-        labels:   {{ defect_labels | tojson | safe }},
+        labels:   {{ defect_labels | tojson }}.map(t),
         datasets: [{
           data:            {{ defect_values | tojson | safe }},
           backgroundColor: PALETTE,

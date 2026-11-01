@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="{{ language }}"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ unit.pcb_id or _('Unit PCB') }} {{ _("· Manajemen Inspeksi — PCB Inspect") }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workflow.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+{% include 'shared/i18n.html' %}
+</head><body>
+{% include 'shared/sidebar.html' %}
+
+<main class="main workflow-main">
+  {% include 'shared/workspace_context.html' %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}<p role="alert" class="notice {{ category }}">{{ _(message) }}</p>{% endfor %}
+
+<h1>{{ unit.pcb_id or _('PCB tanpa ID') }}</h1><p class="wf-muted">{{ _(inspections|length) }} {{ _("inspeksi terhubung · Status unit:") }} {{ _(unit.work_status) }}</p>
+<section class="wf-panel"><h2>{{ _("Pengelompokan") }} & {{ _("tindak lanjut") }}</h2>
+<form method="post"><input type="hidden" name="csrf_token" value="{{ workflow_csrf }}"><div class="wf-grid">
+  {% if role == 'admin' %}
+  <label>{{ _("Jenis PCB") }}<select name="pcb_type_id"><option value="">{{ _("Belum ditentukan") }}</option>{% for type in types %}<option value="{{ type.id }}" {{ 'selected' if unit.pcb_type_id == type.id }}>{{ type.name }}</option>{% endfor %}</select></label>
+  <label>{{ _("Prioritas") }}<select name="priority">{% for priority in priorities %}<option value="{{ priority }}" {{ 'selected' if unit.priority == priority }}>{{ _(priority) }}</option>{% endfor %}</select></label>
+  {% else %}
+  <div><p>{{ _("Jenis:") }} <strong>{% for type in types if type.id == unit.pcb_type_id %}{{ type.name }}{% else %}{{ _("Belum ditentukan") }}{% endfor %}</strong></p><p>{{ _("Prioritas:") }} {{ _(unit.priority) }}</p></div>
+  {% endif %}
+  <label>{{ _("Status pengerjaan") }}<select name="status">{% for status in work_statuses %}<option value="{{ status }}" {{ 'selected' if unit.work_status == status }}>{{ _(status) }}</option>{% endfor %}</select></label>
+</div><label style="margin-top:16px">{{ _("Catatan tindakan / alasan inspeksi ulang") }}<textarea name="notes" maxlength="2000">{{ unit.notes or _('') }}</textarea></label><div class="wf-actions"><button>{{ _("Simpan pembaruan inspeksi") }}</button>{% if role == 'technician' %}<a href="{{ url_for('technician_detection', pcb_id=unit.pcb_id or '') }}">{{ _("Lakukan inspeksi ulang →") }}</a>{% endif %}</div></form>
+<p class="wf-muted">{{ _("Untuk status Selesai, hasil inspeksi terbaru harus sudah diverifikasi teknisi. Inspeksi baru setelah Selesai atau Perlu Inspeksi Ulang akan membuka kembali status Dikerjakan.") }}</p>
+</section>
+<h2 style="margin-top:32px">{{ _("Riwayat inspeksi") }} & {{ _("verifikasi") }}</h2>
+{% for inspection in inspections %}
+<section class="wf-panel" id="inspection-{{ inspection.id }}"><h2>{{ _("Inspeksi #") }}{{ _(inspection.id) }} {{ _('· Terbaru' if loop.first) }}</h2><p class="wf-muted">{{ _(inspection.created_at) }} {{ _("· AI:") }} {{ _(inspection.status) }} / {{ _(inspection.defect_type) }}</p>
+<div class="wf-images">{% for path, caption in [(inspection.source_image_path,'Gambar asli'),(inspection.image_path,'Hasil deteksi AI')] %}{% if path and path.startswith('/images/') %}<figure><img src="{{ path }}" alt="{{ _(caption) }} {{ _("inspeksi") }} {{ _(inspection.id) }}" loading="lazy"><figcaption>{{ _(caption) }}</figcaption></figure>{% endif %}{% endfor %}</div>
+<p>{{ _("Verifikasi:") }} <strong>{{ _(inspection.verification or 'Belum diverifikasi') }}</strong>{% if inspection.corrected_defect %} {{ _("· Hasil koreksi:") }} <strong>{{ _(inspection.corrected_defect) }}</strong>{% endif %}</p>
+{% if inspection.reviewer_name %}<p class="wf-muted">{{ _("Oleh") }} {{ inspection.reviewer_name }} · {{ _(inspection.reviewed_at) }}</p>{% endif %}
+{% if inspection.reason %}<p>{{ _("Catatan teknisi:") }} {{ inspection.reason }}</p>{% endif %}
+{% if role == 'technician' %}
+<details><summary>{{ _('Ubah verifikasi' if inspection.verification else 'Verifikasi hasil AI') }}</summary>
+<form method="post" action="{{ url_for('workflow.review', detection_id=inspection.id) }}" style="margin-top:16px"><input type="hidden" name="csrf_token" value="{{ workflow_csrf }}"><div class="wf-grid">
+<label>{{ _("Keputusan") }}<select name="verification"><option value="Dikonfirmasi" {{ 'selected' if inspection.verification == 'Dikonfirmasi' }}>{{ _("Dikonfirmasi") }}</option><option value="Dikoreksi" {{ 'selected' if inspection.verification == 'Dikoreksi' }}>{{ _("Dikoreksi") }}</option></select></label>
+<label>{{ _("Jenis cacat utama yang benar (untuk koreksi)") }}<select name="corrected_defect"><option value="">{{ _("Pilih jika mengoreksi") }}</option>{% for defect in defect_options %}<option value="{{ defect }}" {{ 'selected' if inspection.corrected_defect == defect }}>{{ _(defect) }}</option>{% endfor %}</select></label></div>
+<label style="margin-top:16px">{{ _("Alasan / catatan (wajib untuk koreksi)") }}<textarea name="reason" maxlength="2000">{{ inspection.reason or _('') }}</textarea></label><div class="wf-actions"><button>{{ _("Simpan verifikasi") }}</button></div></form></details>
+{% endif %}
+</section>{% else %}<p>{{ _("Belum ada inspeksi.") }}</p>{% endfor %}
+<section class="wf-panel"><h2>{{ _("Jejak perubahan") }}</h2><p class="wf-muted">{{ _("Menampilkan pelaku, waktu, serta nilai sebelum dan sesudah perubahan. Prediksi AI asli tidak diganti oleh verifikasi.") }}</p>
+{% for event in events %}<article class="wf-event"><strong>{{ _(event.event_type) }}</strong> · {{ event.actor_name }} · {{ _(event.created_at) }}{% if event.detection_id %} {{ _("· inspeksi #") }}{{ _(event.detection_id) }}{% endif %}<div class="wf-scroll"><table><thead><tr><th>{{ _("Perubahan") }}</th><th>{{ _("Sebelum") }}</th><th>{{ _("Sesudah") }}</th></tr></thead><tbody>{% for change in event.changes %}<tr><td>{{ _(change.label) }}</td><td>{{ _(change.before) }}</td><td>{{ _(change.after) }}</td></tr>{% else %}<tr><td colspan="3">{{ _("Verifikasi disimpan kembali tanpa perubahan isi.") }}</td></tr>{% endfor %}</tbody></table></div></article>{% else %}<p>{{ _("Belum ada perubahan yang dicatat.") }}</p>{% endfor %}</section>
+
+</main></body></html>

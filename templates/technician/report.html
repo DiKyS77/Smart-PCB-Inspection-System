@@ -1,489 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Report — PCB Defect Detection</title>
+  <title>{{ _("Report — PCB Defect Detection") }}</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #eef3fb;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────── */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 240px;
-      background: #1f2558;
-      color: #eef3fb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 28px 22px;
-      z-index: 100;
-    }
-
-    .sidebar .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 32px;
-      font-weight: 700;
-      font-size: 0.95rem;
-    }
-
-    .sidebar .logo i {
-      background: #37d08f;
-      color: #0f172a;
-      padding: 10px;
-      border-radius: 12px;
-      font-size: 1.1rem;
-      flex-shrink: 0;
-    }
-
-    .sidebar .menu a {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: #d6d8ef;
-      padding: 11px 14px;
-      border-radius: 12px;
-      text-decoration: none;
-      margin-bottom: 6px;
-      font-size: 0.9rem;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
-
-    .sidebar .menu a.active {
-      background: rgba(255,255,255,0.07);
-      color: #fff;
-      border-left: 3px solid #37d08f;
-      padding-left: 11px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .user-info { font-size: 12px; line-height: 1.5; }
-
-    /* ── MAIN ────────────────────────────────────────────────── */
-    .main {
-      margin-left: 240px;
-      padding: 32px 32px 48px;
-    }
-
-    .page-heading { margin-bottom: 28px; }
-    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
-    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
-
-    /* ── PANEL ───────────────────────────────────────────────── */
-    .panel {
-      background: #fff;
-      border-radius: 20px;
-      padding: 24px 28px;
-      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .panel-header .icon-badge {
-      width: 36px; height: 36px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
-
-    /* ── FILTER BAR ──────────────────────────────────────────── */
-    .filter-bar {
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .filter-field label {
-      display: block;
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 4px;
-    }
-
-    .filter-field input[type="date"] {
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 8px 12px;
-      font-size: 0.86rem;
-      color: #1e293b;
-      background: #f8fafc;
-      outline: none;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .filter-field input[type="date"]:focus {
-      border-color: #1f2558;
-      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
-    }
-
-    .btn-act {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 9px 18px;
-      border-radius: 10px;
-      font-size: 0.84rem;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s;
-      text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .btn-act:hover { opacity: 0.85; }
-    .btn-act.primary { background: #1f2558; color: #fff; }
-    .btn-act.ghost   { background: #f1f5f9; color: #1f2558; border: 1px solid #e2e8f0; }
-    .btn-act.green   { background: #37d08f; color: #0f172a; }
-
-    /* Filter chips */
-    .filter-chip {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px;
-      background: rgba(31,37,88,0.07);
-      border-radius: 999px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #1f2558;
-    }
-
-    .filter-chip a { color: #94a3b8; text-decoration: none; }
-    .filter-chip a:hover { color: #ef4444; }
-
-    /* ── SUMMARY CARDS ───────────────────────────────────────── */
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .summary-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 18px 20px;
-      box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .summary-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-
-    .summary-label {
-      font-size: 0.73rem;
-      color: #6b7280;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 3px;
-    }
-
-    .summary-value {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: #1e293b;
-      line-height: 1;
-    }
-
-    .summary-sub {
-      font-size: 0.78rem;
-      color: #94a3b8;
-      margin-top: 3px;
-    }
-
-    /* ── CHARTS GRID ─────────────────────────────────────────── */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-
-    .chart-box { height: 260px; }
-
-    /* Defect legend list */
-    .defect-legend { list-style: none; padding: 0; margin: 0; }
-
-    .defect-legend li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #f8fafc;
-      font-size: 0.86rem;
-    }
-
-    .defect-legend li:last-child { border-bottom: none; }
-
-    .defect-legend .leg-left {
-      display: flex; align-items: center; gap: 8px;
-    }
-
-    .leg-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%; flex-shrink: 0;
-    }
-
-    .leg-name { font-weight: 600; color: #1e293b; }
-
-    .leg-right {
-      display: flex; align-items: center; gap: 10px;
-    }
-
-    .leg-count {
-      font-weight: 700; color: #1e293b; font-size: 0.88rem;
-    }
-
-    .leg-pct {
-      font-size: 0.75rem; color: #94a3b8;
-      min-width: 38px; text-align: right;
-    }
-
-    /* Mini bar */
-    .leg-bar-wrap { width: 60px; }
-    .leg-bar-track {
-      height: 5px; border-radius: 999px;
-      background: #f1f5f9; overflow: hidden;
-    }
-    .leg-bar-fill {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-    }
-
-    /* ── TABLE ───────────────────────────────────────────────── */
-    .report-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .report-table thead tr { border-bottom: 2px solid #f1f5f9; }
-
-    .report-table th {
-      padding: 11px 14px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      text-align: left;
-    }
-
-    .report-table tbody tr {
-      border-bottom: 1px solid #f8fafc;
-      transition: background 0.1s;
-    }
-
-    .report-table tbody tr:hover { background: #f8fafc; }
-
-    .report-table td {
-      padding: 13px 14px;
-      font-size: 0.86rem;
-      color: #374151;
-      vertical-align: middle;
-    }
-
-    /* Thumbnail */
-    .td-thumb {
-      width: 64px; height: 46px;
-      object-fit: contain;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      background: #0f172a;
-      display: block;
-    }
-
-    .td-thumb-empty {
-      width: 64px; height: 46px;
-      border-radius: 8px;
-      border: 1px solid #e2e8f0;
-      background: #f1f5f9;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1; font-size: 1rem;
-    }
-
-    /* Defect badges — consistent with other pages */
-    .defect-badge {
-      display: inline-block;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      white-space: nowrap;
-    }
-
-    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
-    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
-    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
-    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
-    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
-    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
-    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
-    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
-    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
-
-    /* Status pill */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 10px; border-radius: 999px;
-      font-size: 0.75rem; font-weight: 700;
-    }
-
-    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
-    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
-
-    /* Accuracy bar */
-    .acc-wrap { min-width: 70px; }
-    .acc-num  { font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
-    .acc-track {
-      height: 5px; border-radius: 999px;
-      background: #e5e7eb; overflow: hidden;
-    }
-    .acc-fill {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-    }
-
-    /* Empty state */
-    .empty-row td {
-      text-align: center; padding: 44px; color: #94a3b8;
-    }
-
-    /* Pagination */
-    .pag-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9;
-      font-size: 0.82rem; color: #6b7280;
-      flex-wrap: wrap; gap: 10px;
-    }
-
-    .pag-btns { display: flex; gap: 5px; }
-
-    .pag-btn {
-      width: 32px; height: 32px;
-      border: 1px solid #e2e8f0; border-radius: 8px;
-      background: #fff; color: #374151;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-
-    .pag-btn:hover  { border-color: #1f2558; color: #1f2558; }
-    .pag-btn.active { background: #1f2558; color: #fff; border-color: #1f2558; }
-    .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
-    @media (max-width: 1100px) {
-      .charts-grid  { grid-template-columns: 1fr; }
-      .summary-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-
-    @media (max-width: 767px) {
-      .sidebar { display: none; }
-      .main    { margin-left: 0; padding: 20px 16px 40px; }
-      .summary-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% include 'shared/i18n.html' %}
 </head>
-<body>
+<body class="view-technician-report">
 
-<!-- ══════════════════════════════════════════════════════════════
-     SIDEBAR
-══════════════════════════════════════════════════════════════ -->
-<div class="sidebar">
-  <div>
-    <div class="logo">
-      <i class="fas fa-microchip"></i>
-      <span>PCB Defect<br>Detection</span>
-    </div>
-    <div class="menu">
-      <a href="{{ url_for('technician_dashboard') }}">
-        <i class="fas fa-home"></i> Dashboard
-      </a>
-      <a href="{{ url_for('technician_detection') }}">
-        <i class="fas fa-camera"></i> Detection
-      </a>
-      <a href="{{ url_for('technician_history') }}">
-        <i class="fas fa-clock"></i> History
-      </a>
-      <a href="{{ url_for('technician_report') }}" class="active">
-        <i class="fas fa-file-alt"></i> Report
-      </a>
-    </div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="dropdown">
-      <a href="#" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
-      </a>
-      <ul class="dropdown-menu">
-        <li>
-          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">
-            Settings
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="/logout">Logout</a>
-        </li>
-      </ul>
-    </div>
-    <div class="user-info">
-      <div style="font-weight:600">{{ username or 'User' }}</div>
-      <div style="color:#94a3b8">{{ role or 'Technician' }}</div>
-    </div>
-  </div>
-</div>
+{% include 'shared/sidebar.html' %}
 
-<!-- ══════════════════════════════════════════════════════════════
-     MAIN
-══════════════════════════════════════════════════════════════ -->
 <main class="main">
+  {% include 'shared/workspace_context.html' %}
 
   <div class="page-heading">
-    <h2>Report</h2>
-    <p>Statistics and summary of PCB defect detection results.</p>
+    <h2>{{ _("Reports") }}</h2>
+    <p>{{ _("Statistics and summary of PCB defect detection results.") }}</p>
   </div>
 
-  <!-- ══ 1. FILTER + DOWNLOAD ════════════════════════════════ -->
   <div class="panel">
     <div class="panel-header" style="flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:160px">
@@ -491,60 +32,51 @@
           <i class="fas fa-filter"></i>
         </div>
         <div>
-          <h5>Filter Report</h5>
-          <p>Select date range to narrow down results</p>
+          <h5>{{ _("Filter Report") }}</h5>
+          <p>{{ _("Select date range to narrow down results") }}</p>
         </div>
       </div>
     </div>
 
-    <!--
-      SATU form untuk filter DAN export — bedanya hanya pada button name.
-      app.py cek: request.form.get('export') → download XLSX
-      Jika tombol Filter ditekan: name="filter", bukan "export" → hanya filter
-    -->
     <form method="post" id="reportForm" novalidate>
 
       <div class="filter-bar mb-3">
         <div class="filter-field">
-          <label>From</label>
+          <label>{{ _("From") }}</label>
           <input type="date" name="start_date"
                  id="startDate"
                  value="{{ start_date }}" />
         </div>
         <div class="filter-field">
-          <label>To</label>
+          <label>{{ _("To") }}</label>
           <input type="date" name="end_date"
                  id="endDate"
                  value="{{ end_date }}" />
         </div>
 
-        <!-- FIX: name="filter" → backend tidak anggap ini sebagai export request -->
         <button type="submit" name="filter" value="1" class="btn-act primary">
-          <i class="fas fa-filter"></i> Filter
+          <i class="fas fa-filter"></i> {{ _("Filter") }}
         </button>
 
-        <!-- FIX: name="export" value="1" → app.py cek request.form.get('export') -->
-        <button type="submit" name="export" value="1" class="btn-act green" id="exportBtn">
-          <i class="fas fa-download"></i> Download XLSX
+        <button type="submit" name="export" value="1" class="btn-act green">
+          <i class="fas fa-download"></i> {{ _("Download XLSX") }}
         </button>
 
         {% if start_date or end_date %}
         <a href="{{ url_for('technician_report') }}" class="btn-act ghost">
-          <i class="fas fa-times"></i> Reset
+          <i class="fas fa-times"></i> {{ _("Reset") }}
         </a>
         {% endif %}
       </div>
 
-      <!-- Error dari backend (validasi tanggal) -->
       {% if error %}
       <div class="alert alert-danger d-flex align-items-center gap-2 mb-0"
            style="border-radius:10px;font-size:0.86rem">
         <i class="fas fa-exclamation-circle"></i>
-        {{ error }}
+        {{ _(error) }}
       </div>
       {% endif %}
 
-      <!-- Error dari JS (sebelum submit) -->
       <div id="jsError"
            class="alert alert-danger d-flex align-items-center gap-2 mb-0 d-none"
            style="border-radius:10px;font-size:0.86rem">
@@ -553,20 +85,19 @@
       </div>
     </form>
 
-    <!-- Active filter chips -->
     {% if start_date or end_date %}
     <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
       {% if start_date %}
       <span class="filter-chip">
         <i class="fas fa-calendar-day"></i>
-        From: {{ start_date }}
+        {{ _("From:") }} {{ _(start_date) }}
         <a href="{{ url_for('technician_report') }}?end_date={{ end_date }}">✕</a>
       </span>
       {% endif %}
       {% if end_date %}
       <span class="filter-chip">
         <i class="fas fa-calendar-day"></i>
-        To: {{ end_date }}
+        {{ _("To:") }} {{ _(end_date) }}
         <a href="{{ url_for('technician_report') }}?start_date={{ start_date }}">✕</a>
       </span>
       {% endif %}
@@ -574,22 +105,20 @@
     {% endif %}
   </div>
 
-  <!-- ══ 2. SUMMARY CARDS ═════════════════════════════════════ -->
   {% if defect_summary %}
   <div class="summary-grid">
-    {% set palette = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'] %}
+    {% set palette = ['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'] %}
     {% for item in defect_summary %}
     {% if item.count > 0 %}
     <div class="summary-card">
       <div class="summary-icon"
-           style="background:{{ palette[loop.index0 % 6] }}20;
-                  color:{{ palette[loop.index0 % 6] }}">
+           >
         <i class="fas fa-bug"></i>
       </div>
       <div>
-        <div class="summary-label">{{ item.defect_type | replace('_',' ') }}</div>
-        <div class="summary-value">{{ item.count }}</div>
-        <div class="summary-sub">{{ item.percent }}% of total detections</div>
+        <div class="summary-label">{{ _(item.defect_type | replace('_',' ')) }}</div>
+        <div class="summary-value">{{ _(item.count) }}</div>
+        <div class="summary-sub">{{ _(item.percent) }}{{ _("% of total detections") }}</div>
       </div>
     </div>
     {% endif %}
@@ -597,18 +126,16 @@
   </div>
   {% endif %}
 
-  <!-- ══ 3. CHARTS + LEGEND ════════════════════════════════════ -->
   <div class="charts-grid">
 
-    <!-- Doughnut chart -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#fef2f2;color:#dc2626">
           <i class="fas fa-chart-pie"></i>
         </div>
         <div>
-          <h5>Defect Distribution</h5>
-          <p>Proportion of each defect type — total {{ report_total }} detections</p>
+          <h5>{{ _("Defect Distribution") }}</h5>
+          <p>{{ _("Proportion of each defect type — total") }} {{ _(report_total) }} {{ _("detections") }}</p>
         </div>
       </div>
 
@@ -622,31 +149,30 @@
       <div style="text-align:center;padding:40px;color:#94a3b8">
         <i class="fas fa-chart-pie"
            style="font-size:2.5rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
-        No data for the selected period.
+        {{ _("No data for the selected period.") }}
       </div>
       {% endif %}
     </div>
 
-    <!-- Defect legend / breakdown -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#f5f3ff;color:#7c3aed">
           <i class="fas fa-list"></i>
         </div>
         <div>
-          <h5>Defect Breakdown</h5>
-          <p>Count and percentage per type</p>
+          <h5>{{ _("Defect Breakdown") }}</h5>
+          <p>{{ _("Count and percentage per type") }}</p>
         </div>
       </div>
 
-      {% set palette = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'] %}
+      {% set palette = ['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'] %}
       <ul class="defect-legend">
         {% for item in defect_summary %}
         <li>
           <div class="leg-left">
             <span class="leg-dot"
                   style="background:{{ palette[loop.index0 % 6] }}"></span>
-            <span class="leg-name">{{ item.defect_type | replace('_',' ') }}</span>
+            <span class="leg-name">{{ _(item.defect_type | replace('_',' ')) }}</span>
           </div>
           <div class="leg-right">
             <div class="leg-bar-wrap">
@@ -656,20 +182,19 @@
                             background:{{ palette[loop.index0 % 6] }}"></div>
               </div>
             </div>
-            <span class="leg-count">{{ item.count }}</span>
-            <span class="leg-pct">{{ item.percent }}%</span>
+            <span class="leg-count">{{ _(item.count) }}</span>
+            <span class="leg-pct">{{ _(item.percent) }}%</span>
           </div>
         </li>
         {% else %}
         <li style="color:#94a3b8;justify-content:center;padding:24px 0">
-          No defect data available.
+          {{ _("No defect data available.") }}
         </li>
         {% endfor %}
       </ul>
     </div>
   </div>
 
-  <!-- ══ 4. DETECTION LOG TABLE ════════════════════════════════ -->
   <div class="panel">
     <div class="panel-header" style="flex-wrap:wrap;gap:12px">
       <div style="display:flex;align-items:center;gap:10px;flex:1">
@@ -677,18 +202,18 @@
           <i class="fas fa-table"></i>
         </div>
         <div>
-          <h5>Detection Log</h5>
+          <h5>{{ _("Detection Log") }}</h5>
           <p>
             {% if start_date and end_date %}
-              {{ start_date }} — {{ end_date }}
+              {{ _(start_date) }} — {{ _(end_date) }}
             {% elif start_date %}
-              From {{ start_date }}
+              {{ _("From") }} {{ _(start_date) }}
             {% elif end_date %}
-              Until {{ end_date }}
+              {{ _("Until") }} {{ _(end_date) }}
             {% else %}
-              All detections
+              {{ _("All detections") }}
             {% endif %}
-            &nbsp;·&nbsp; {{ report_total }} record{{ 's' if report_total != 1 }}
+            &nbsp;·&nbsp; {{ _(report_total) }} {{ _("record") }}{{ _('s' if report_total != 1) }}
           </p>
         </div>
       </div>
@@ -699,30 +224,28 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>PCB ID</th>
-            <th>Image</th>
-            <th>File Name</th>
-            <th>Date &amp; Time</th>
-            <th>Defect Type</th>
-            <th>Accuracy</th>
-            <th>Detection Status</th>
-            <th>Status Tindak Lanjut</th>
+            <th>{{ _("PCB ID") }}</th>
+            <th>{{ _("Image") }}</th>
+            <th>{{ _("File Name") }}</th>
+            <th>{{ _("Date") }} &amp; {{ _("Time") }}</th>
+            <th>{{ _("Defect Type") }}</th>
+            <th>{{ _("Detection Status") }}</th>
+            <th>{{ _("Status Tindak Lanjut") }}</th>
           </tr>
         </thead>
         <tbody id="tableBody">
           {% if report_rows %}
             {% for row in report_rows %}
             <tr>
-              <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
-              <td style="font-family:monospace;font-weight:700">{{ row.pcb_id or '—' }}</td>
+              <td style="font-weight:700;color:#94a3b8">{{ _(loop.index) }}</td>
+              <td style="font-family:monospace;font-weight:700">{{ row.pcb_id or _('—') }}</td>
 
               <td>
-                {# FIX: pakai row.image_url (sudah diproses get_image_url di backend)
-                         bukan row.image_path mentah #}
+
                 {% if row.image_url %}
                   <img class="td-thumb"
                        src="{{ row.image_url }}"
-                       alt="{{ row.defect_type }}" />
+                       alt="{{ _(row.defect_type) }}" />
                 {% else %}
                   <div class="td-thumb-empty">
                     <i class="fas fa-image"></i>
@@ -733,34 +256,25 @@
               <td style="font-size:0.8rem;color:#6b7280;
                          max-width:120px;overflow:hidden;
                          text-overflow:ellipsis;white-space:nowrap"
-                  title="{{ row.file_name or '-' }}">
-                {{ row.file_name or 'N/A' }}
+                  title="{{ row.file_name or _('-') }}">
+                {{ row.file_name or _('N/A') }}
               </td>
 
               <td>
                 <div style="font-size:0.85rem;font-weight:600">
-                  {{ row.created_at.strftime('%d %b %Y') }}
+                  {{ _(row.created_at.strftime('%d %b %Y')) }}
                 </div>
                 <div style="font-size:0.76rem;color:#94a3b8">
-                  {{ row.created_at.strftime('%H:%M:%S') }}
+                  {{ _(row.created_at.strftime('%H:%M:%S')) }}
                 </div>
               </td>
 
               <td>
-                {# FIX: custom defect-badge konsisten dengan halaman lain #}
+
                 <span class="defect-badge
                   defect-{{ (row.defect_type or 'no-defect') | replace('_','-') }}">
-                  {{ row.defect_type or 'No Defect' }}
+                  {{ _(row.defect_type or 'No Defect') }}
                 </span>
-              </td>
-
-              <td>
-                <div class="acc-wrap">
-                  <div class="acc-num">{{ row.accuracy }}%</div>
-                  <div class="acc-track">
-                    <div class="acc-fill" style="width:{{ row.accuracy }}%"></div>
-                  </div>
-                </div>
               </td>
 
               <td>
@@ -768,27 +282,27 @@
                   {{ 'defect' if row.status == 'DEFECT' else 'normal' }}">
                   <i class="fas fa-{{ 'exclamation-circle'
                      if row.status == 'DEFECT' else 'check-circle' }}"></i>
-                  {{ row.status or 'NORMAL' }}
+                  {{ _(row.status or 'NORMAL') }}
                 </span>
               </td>
               <td>
-                <span class="badge rounded-pill text-bg-primary">
-                  {{ row.follow_up_status or 'Belum ditinjau' }}
+                <span class="badge text-bg-primary">
+                  {{ _(row.follow_up_status or 'Belum ditinjau') }}
                 </span>
               </td>
             </tr>
             {% endfor %}
           {% else %}
             <tr class="empty-row">
-              <td colspan="9">
+              <td colspan="8">
                 <i class="fas fa-inbox"
                    style="display:block;font-size:2.5rem;
                           margin-bottom:10px;color:#cbd5e1"></i>
-                No detection records found
+                {{ _("No detection records found") }}
                 {% if start_date or end_date %}
-                  for the selected date range.
+                  {{ _("for the selected date range.") }}
                 {% else %}
-                  yet.
+                  {{ _("yet.") }}
                 {% endif %}
               </td>
             </tr>
@@ -797,31 +311,24 @@
       </table>
     </div>
 
-    <!-- Client-side pagination -->
-    <div class="pag-row">
-      <span id="pagInfo"></span>
-      <div class="pag-btns" id="pagBtns"></div>
-    </div>
+    {% include 'shared/pagination.html' %}
   </div>
 
 </main>
 
-<!-- ══════════════════════════════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════════════════════════════ -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   /* ── DOUGHNUT CHART ──────────────────────────────────────── */
-  const PALETTE = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'];
+  const PALETTE = ['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'];
 
   const chartEl = document.getElementById('reportChart');
   if (chartEl) {
     new Chart(chartEl, {
       type: 'doughnut',
       data: {
-        labels:   {{ defect_labels | tojson | safe }},
+        labels:   {{ defect_labels | tojson }}.map(t),
         datasets: [{
           data:            {{ defect_values | tojson | safe }},
           backgroundColor: PALETTE,
@@ -855,7 +362,6 @@
   const endDate   = document.getElementById('endDate');
   const jsError   = document.getElementById('jsError');
   const jsErrMsg  = document.getElementById('jsErrorMsg');
-  const exportBtn = document.getElementById('exportBtn');
 
   function showJsError(msg) {
     jsErrMsg.textContent = msg;
@@ -869,94 +375,16 @@
   [startDate, endDate].forEach(el => el.addEventListener('change', hideJsError));
 
   form.addEventListener('submit', function(e) {
-    const clickedName = document.activeElement?.name;
     const noDate = !startDate.value && !endDate.value;
 
     if (noDate) {
       e.preventDefault();
-      showJsError('Please select a start date or end date before submitting.');
-      return;
+      showJsError(t('Please select a start date or end date before submitting.'));
     }
 
-    // Extra check: if exporting, inform user the data will download
-    if (clickedName === 'export' && !startDate.value && !endDate.value) {
-      e.preventDefault();
-      showJsError('Select a date range before downloading the report.');
-    }
   });
 
-  /* ── PAGINATION ──────────────────────────────────────────── */
-  const PER_PAGE = 10;
-  let currentPage = 1;
-
-  function getRows() {
-    return Array.from(
-      document.querySelectorAll('#tableBody tr:not(.empty-row)')
-    );
-  }
-
-  function renderPagination() {
-    const rows  = getRows();
-    const total = rows.length;
-    if (total === 0) return;
-
-    const pages = Math.ceil(total / PER_PAGE);
-    const start = (currentPage - 1) * PER_PAGE;
-    const end   = Math.min(start + PER_PAGE, total);
-
-    rows.forEach((r, i) => {
-      r.style.display = (i >= start && i < end) ? '' : 'none';
-    });
-
-    document.getElementById('pagInfo').textContent =
-      `Showing ${start + 1}–${end} of ${total} records`;
-
-    const btns = document.getElementById('pagBtns');
-    btns.innerHTML = '';
-
-    const prev     = document.createElement('button');
-    prev.className = 'pag-btn';
-    prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
-    prev.disabled  = currentPage === 1;
-    prev.onclick   = () => { currentPage--; renderPagination(); };
-    btns.appendChild(prev);
-
-    const WING = 2;
-    for (let p = 1; p <= pages; p++) {
-      if (
-        p === 1 || p === pages ||
-        (p >= currentPage - WING && p <= currentPage + WING)
-      ) {
-        const b = document.createElement('button');
-        b.className   = 'pag-btn' + (p === currentPage ? ' active' : '');
-        b.textContent = p;
-        b.onclick = (() => {
-          const pg = p;
-          return () => { currentPage = pg; renderPagination(); };
-        })();
-        btns.appendChild(b);
-      } else if (
-        p === currentPage - WING - 1 ||
-        p === currentPage + WING + 1
-      ) {
-        const d = document.createElement('span');
-        d.textContent = '…';
-        d.style.cssText =
-          'padding:0 4px;color:#94a3b8;font-size:0.82rem;display:flex;align-items:center';
-        btns.appendChild(d);
-      }
-    }
-
-    const next     = document.createElement('button');
-    next.className = 'pag-btn';
-    next.innerHTML = '<i class="fas fa-chevron-right"></i>';
-    next.disabled  = currentPage >= pages;
-    next.onclick   = () => { currentPage++; renderPagination(); };
-    btns.appendChild(next);
-  }
-
-  renderPagination();
-</script>
+  </script>
 
 </body>
 </html>

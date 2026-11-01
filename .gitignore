@@ -1,9 +1,12 @@
 # Virtual Environment
 venv/
+.venv/
 
 # Python cache
 __pycache__/
 *.pyc
+.pytest_cache/
+*.pyo
 
 # Dataset
 train/
@@ -18,3 +21,7 @@ backup/
 
 # VS Code
 .vscode/
+
+smartpcb_db.sql
+.env
+.venv-1/

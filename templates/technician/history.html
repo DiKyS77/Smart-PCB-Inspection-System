@@ -1,304 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>History — PCB Defect Detection</title>
+  <title>{{ _("History — PCB Defect Detection") }}</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #eef3fb;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────── */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 240px;
-      background: #1f2558;
-      color: #eef3fb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 28px 22px;
-      z-index: 100;
-    }
-
-    .sidebar .logo {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 32px; font-weight: 700; font-size: 0.95rem;
-    }
-
-    .sidebar .logo i {
-      background: #37d08f; color: #0f172a;
-      padding: 10px; border-radius: 12px;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-
-    .sidebar .menu a {
-      display: flex; align-items: center; gap: 12px;
-      color: #d6d8ef; padding: 11px 14px;
-      border-radius: 12px; text-decoration: none;
-      margin-bottom: 6px; font-size: 0.9rem;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
-
-    .sidebar .menu a.active {
-      background: rgba(255,255,255,0.07); color: #fff;
-      border-left: 3px solid #37d08f; padding-left: 11px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 16px; display: flex; align-items: center; gap: 12px;
-    }
-
-    .user-info { font-size: 12px; line-height: 1.5; }
-
-    /* ── MAIN ────────────────────────────────────────────────── */
-    .main { margin-left: 240px; padding: 32px 32px 48px; }
-
-    .page-heading { margin-bottom: 28px; }
-    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
-    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
-
-    /* ── PANEL ───────────────────────────────────────────────── */
-    .panel {
-      background: #fff; border-radius: 20px;
-      padding: 24px 28px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      gap: 12px; margin-bottom: 20px;
-      padding-bottom: 14px; border-bottom: 1px solid #f1f5f9;
-      flex-wrap: wrap;
-    }
-
-    .panel-header-left {
-      display: flex; align-items: center; gap: 10px;
-    }
-
-    .icon-badge {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
-
-    /* ── SEARCH BOX ──────────────────────────────────────────── */
-    .search-wrap { position: relative; }
-
-    .search-wrap input {
-      border: 1px solid #e2e8f0; border-radius: 999px;
-      padding: 8px 16px 8px 36px; font-size: 0.86rem;
-      color: #1e293b; background: #f8fafc;
-      outline: none; width: 240px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-    }
-
-    .search-wrap input:focus {
-      border-color: #1f2558;
-      box-shadow: 0 0 0 3px rgba(31,37,88,0.08);
-    }
-
-    .search-wrap i {
-      position: absolute; left: 12px; top: 50%;
-      transform: translateY(-50%); color: #94a3b8; font-size: 0.82rem;
-    }
-
-    /* ── TABLE ───────────────────────────────────────────────── */
-    .history-table { width: 100%; border-collapse: collapse; }
-
-    .history-table thead tr { border-bottom: 2px solid #f1f5f9; }
-
-    .history-table th {
-      padding: 11px 14px; font-size: 0.75rem; font-weight: 700;
-      color: #6b7280; text-transform: uppercase;
-      letter-spacing: 0.04em; text-align: left;
-    }
-
-    .history-table tbody tr {
-      border-bottom: 1px solid #f8fafc; transition: background 0.1s;
-    }
-
-    .history-table tbody tr:hover { background: #f8fafc; }
-
-    .history-table td {
-      padding: 13px 14px; font-size: 0.86rem;
-      color: #374151; vertical-align: middle;
-    }
-
-    /* FIX: thumbnail pakai contain + bg gelap — PCB tidak terdistorsi */
-    .td-thumb {
-      width: 64px; height: 46px;
-      object-fit: contain;      /* FIX dari cover → contain */
-      background: #0f172a;      /* FIX: bg gelap konsisten dengan halaman lain */
-      border-radius: 8px; border: 1px solid #e2e8f0; display: block;
-    }
-
-    .td-thumb-empty {
-      width: 64px; height: 46px; border-radius: 8px;
-      border: 1px solid #e2e8f0; background: #f1f5f9;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1;
-    }
-
-    /* Defect badges — konsisten dengan semua halaman lain */
-    .defect-badge {
-      display: inline-block; padding: 4px 10px;
-      border-radius: 999px; font-size: 0.75rem;
-      font-weight: 700; white-space: nowrap;
-    }
-
-    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
-    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
-    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
-    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
-    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
-    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
-    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
-    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
-    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
-
-    /* Status pill */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 10px; border-radius: 999px;
-      font-size: 0.75rem; font-weight: 700;
-    }
-
-    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
-    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
-
-    /* Accuracy mini bar */
-    .acc-wrap { min-width: 70px; }
-    .acc-num  { font-size: 0.8rem; font-weight: 700; margin-bottom: 3px; }
-    .acc-track { height: 5px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
-    .acc-fill  {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-    }
-
-    /* Detail button */
-    .btn-detail {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 14px; border: 1px solid #1f2558; border-radius: 999px;
-      color: #1f2558; font-size: 0.8rem; font-weight: 600;
-      text-decoration: none; background: #fff;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .btn-detail:hover { background: #1f2558; color: #fff; }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center; padding: 48px 20px;
-      display: none;
-    }
-
-    .empty-state.show { display: block; }
-    .empty-state i { font-size: 3rem; color: #cbd5e1; display: block; margin-bottom: 12px; }
-    .empty-state p { color: #94a3b8; margin: 0; }
-
-    /* Pagination */
-    .pag-row {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-top: 20px; padding-top: 14px; border-top: 1px solid #f1f5f9;
-      font-size: 0.83rem; color: #6b7280;
-      flex-wrap: wrap; gap: 10px;
-    }
-
-    .pag-btns { display: flex; gap: 5px; }
-
-    .pag-btn {
-      width: 32px; height: 32px;
-      border: 1px solid #e2e8f0; border-radius: 8px;
-      background: #fff; color: #374151;
-      font-size: 0.8rem; font-weight: 600; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: border-color 0.15s, color 0.15s, background 0.15s;
-    }
-
-    .pag-btn:hover  { border-color: #1f2558; color: #1f2558; }
-    .pag-btn.active { background: #1f2558; color: #fff; border-color: #1f2558; }
-    .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
-    @media (max-width: 991px) {
-      .sidebar { display: none; }
-      .main    { margin-left: 0; padding: 20px 16px 40px; }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% include 'shared/i18n.html' %}
 </head>
-<body>
+<body class="view-technician-history">
 
-<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
-<div id="sidebar" class="sidebar">
-  <div>
-    <div class="logo">
-      <i class="fas fa-microchip"></i>
-      <span>PCB Defect<br>Detection</span>
-    </div>
-    <div class="menu">
-      <a href="{{ url_for('technician_dashboard') }}">
-        <i class="fas fa-home"></i> Dashboard
-      </a>
-      <a href="{{ url_for('technician_detection') }}">
-        <i class="fas fa-camera"></i> Detection
-      </a>
-      <a href="{{ url_for('technician_history') }}" class="active">
-        <i class="fas fa-clock"></i> History
-      </a>
-      <a href="{{ url_for('technician_report') }}">
-        <i class="fas fa-file-alt"></i> Report
-      </a>
-    </div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="dropdown">
-      <a href="#" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
-      </a>
-      <ul class="dropdown-menu">
-        <li>
-          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">Settings</a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="/logout">Logout</a>
-        </li>
-      </ul>
-    </div>
-    <div class="user-info">
-      <div style="font-weight:600">{{ username }}</div>
-      <div style="color:#94a3b8">{{ role }}</div>
-    </div>
-  </div>
-</div>
+{% include 'shared/sidebar.html' %}
 
-<!-- ── MAIN ─────────────────────────────────────────────────────── -->
 <main class="main">
+  {% include 'shared/workspace_context.html' %}
 
   <div class="page-heading">
-    <h2>History</h2>
-    <p>All PCB detection results — click <strong>View Detail</strong> to inspect each one.</p>
+    <h2>{{ _("Inspection history") }}</h2>
+    <p>{{ _("Hasil inspeksi PCB — klik") }} <strong>{{ _("Detail") }}</strong> {{ _("untuk melihat hasil, memperbarui status, dan memverifikasi prediksi AI.") }}</p>
   </div>
 
-  <!-- ══ DETECTION LOG TABLE ══════════════════════════════════ -->
   <div class="panel">
     <div class="panel-header">
       <div class="panel-header-left">
@@ -306,24 +32,22 @@
           <i class="fas fa-table"></i>
         </div>
         <div>
-          <h5>Detection Log</h5>
-          <p>{{ history_rows | length }} total record{{ 's' if history_rows | length != 1 }}</p>
+          <h5>{{ _("Detection Log") }}</h5>
+          <p>{{ _(history_rows | length) }} {{ _("total record") }}{{ _('s' if history_rows | length != 1) }}</p>
         </div>
       </div>
 
-      <!-- Search -->
       <div class="search-wrap">
         <i class="fas fa-search"></i>
         <input type="search" id="searchInput"
-               placeholder="Cari PCB ID atau status tindakan…"
-               aria-label="Cari berdasarkan PCB ID, jenis cacat, atau status tindak lanjut" />
+               placeholder="{{ _("Cari PCB ID atau status tindakan…") }}"
+               aria-label="{{ _("Cari berdasarkan PCB ID, jenis cacat, atau status tindak lanjut") }}" />
       </div>
     </div>
 
-    <!-- Empty state (search) -->
     <div class="empty-state" id="emptySearch">
       <i class="fas fa-search"></i>
-      <p>Tidak ada catatan yang cocok dengan PCB ID atau kata kunci tersebut.</p>
+      <p>{{ _("Tidak ada catatan yang cocok dengan PCB ID atau kata kunci tersebut.") }}</p>
     </div>
 
     <div class="table-responsive" id="tableWrap">
@@ -331,15 +55,14 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>PCB ID</th>
-            <th>Image</th>
-            <th>File Name</th>
-            <th>Date &amp; Time</th>
-            <th>Defect Type</th>
-            <th>Accuracy</th>    {# FIX: kolom baru — dikirim app.py tapi tidak ada di template lama #}
-            <th>Detection Status</th>
-            <th>Status Tindak Lanjut</th>
-            <th>Action</th>
+            <th>{{ _("PCB ID") }}</th>
+            <th>{{ _("Image") }}</th>
+            <th>{{ _("File Name") }}</th>
+            <th>{{ _("Date") }} &amp; {{ _("Time") }}</th>
+            <th>{{ _("Defect Type") }}</th>
+            <th>{{ _("Detection Status") }}</th>
+            <th>{{ _("Status Tindak Lanjut") }}</th>
+            <th>{{ _("Action") }}</th>
           </tr>
         </thead>
         <tbody id="tableBody">
@@ -349,19 +72,18 @@
                 data-defect="{{ (row.defect_type or '') | lower }}"
                 data-follow-up="{{ (row.follow_up_status or 'Belum ditinjau') | lower }}">
 
-              <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+              <td style="font-weight:700;color:#94a3b8">{{ _(loop.index) }}</td>
 
               <td style="font-family:monospace;font-weight:700">
-                {{ row.pcb_id or '—' }}
+                {{ row.pcb_id or _('—') }}
               </td>
 
               <td>
-                {# FIX: pakai row.image_url (hasil get_image_url dari backend),
-                         BUKAN row.image_path yang lama — path bisa salah folder #}
+
                 {% if row.image_url %}
                   <img class="td-thumb"
                        src="{{ row.image_url }}"
-                       alt="{{ row.defect_type }}" />
+                       alt="{{ _(row.defect_type) }}" />
                 {% else %}
                   <div class="td-thumb-empty">
                     <i class="fas fa-image"></i>
@@ -372,72 +94,61 @@
               <td style="font-size:0.8rem;color:#6b7280;
                          max-width:130px;overflow:hidden;
                          text-overflow:ellipsis;white-space:nowrap"
-                  title="{{ row.file_name or '-' }}">
-                {{ row.file_name or 'N/A' }}
+                  title="{{ row.file_name or _('-') }}">
+                {{ row.file_name or _('N/A') }}
               </td>
 
               <td>
-                {# FIX: None-guard agar tidak crash jika created_at NULL #}
+
                 <div style="font-size:0.85rem;font-weight:600">
-                  {{ row.created_at.strftime('%d %b %Y') if row.created_at else '—' }}
+                  {{ _(row.created_at.strftime('%d %b %Y') if row.created_at else '—') }}
                 </div>
                 <div style="font-size:0.76rem;color:#94a3b8">
-                  {{ row.created_at.strftime('%H:%M:%S') if row.created_at else '' }}
+                  {{ _(row.created_at.strftime('%H:%M:%S') if row.created_at else '') }}
                 </div>
               </td>
 
               <td>
                 <span class="defect-badge
                   defect-{{ (row.defect_type or 'no-defect') | replace('_','-') }}">
-                  {{ row.defect_type or 'No Defect' }}
+                  {{ _(row.defect_type or 'No Defect') }}
                 </span>
               </td>
 
-              {# FIX: accuracy — backend kirim tapi tidak pernah ditampilkan #}
-              <td>
-                <div class="acc-wrap">
-                  <div class="acc-num">{{ row.accuracy or 0 }}%</div>
-                  <div class="acc-track">
-                    <div class="acc-fill" style="width:{{ row.accuracy or 0 }}%"></div>
-                  </div>
-                </div>
-              </td>
-
-              {# FIX: status — backend kirim tapi tidak pernah ditampilkan #}
               <td>
                 <span class="status-pill
                   {{ 'defect' if row.status == 'DEFECT' else 'normal' }}">
                   <i class="fas fa-{{ 'exclamation-circle'
                      if row.status == 'DEFECT' else 'check-circle' }}"></i>
-                  {{ row.status or 'NORMAL' }}
+                  {{ _(row.status or 'NORMAL') }}
                 </span>
               </td>
 
               <td>
-                <span class="badge rounded-pill text-bg-primary">
-                  {{ row.follow_up_status or 'Belum ditinjau' }}
+                <span class="badge text-bg-primary">
+                  {{ _(row.follow_up_status or 'Belum ditinjau') }}
                 </span>
               </td>
 
               <td>
                 <a href="{{ url_for('technician_history_detail', detection_id=row.id) }}"
                    class="btn-detail">
-                  <i class="fas fa-arrow-right"></i> Detail
+                  <i class="fas fa-arrow-right"></i> {{ _("Detail") }}
                 </a>
               </td>
             </tr>
             {% endfor %}
           {% else %}
             <tr id="noDataRow">
-              <td colspan="10" style="text-align:center;padding:44px;color:#94a3b8">
+              <td colspan="9" style="text-align:center;padding:44px;color:#94a3b8">
                 <i class="fas fa-camera"
                    style="display:block;font-size:2.5rem;
                           margin-bottom:12px;color:#cbd5e1"></i>
-                No detection history yet.
+                {{ _("No detection history yet.") }}
                 <a href="{{ url_for('technician_detection') }}"
                    style="display:block;margin-top:10px;
-                          color:#1f2558;font-weight:600;text-decoration:none">
-                  Run your first detection →
+                          color:#668464;font-weight:600;text-decoration:none">
+                  {{ _("Run your first detection →") }}
                 </a>
               </td>
             </tr>
@@ -446,135 +157,12 @@
       </table>
     </div>
 
-    <!-- FIX: Pagination dinamis — sebelumnya hardcoded "Showing 1 to 8 of 24" -->
-    <div class="pag-row">
-      <span id="pagInfo"></span>
-      <div class="pag-btns" id="pagBtns"></div>
-    </div>
+    {% include 'shared/pagination.html' %}
   </div>
 
 </main>
 
-<!-- ── SCRIPTS ───────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-  /* ── SEARCH ──────────────────────────────────────────────── */
-  const searchInput  = document.getElementById('searchInput');
-  const tableWrap    = document.getElementById('tableWrap');
-  const emptySearch  = document.getElementById('emptySearch');
-
-  function getDataRows() {
-    // FIX: exclude static empty-data rows (no data-defect attribute)
-    return Array.from(
-      document.querySelectorAll('#tableBody tr[data-defect]')
-    );
-  }
-
-  searchInput.addEventListener('input', function() {
-    const term = this.value.toLowerCase().trim();
-    let visible = 0;
-
-    getDataRows().forEach(row => {
-      const searchableFields = [
-        row.dataset.pcbId,
-        row.dataset.defect,
-        row.dataset.followUp
-      ];
-      const match = !term || searchableFields.some(value => value.includes(term));
-      row.style.display = match ? '' : 'none';
-      if (match) visible++;
-    });
-
-    const noResult = visible === 0 && term !== '';
-    emptySearch.classList.toggle('show', noResult);
-    tableWrap.style.display  = noResult ? 'none' : '';
-
-    currentPage = 1;
-    renderPagination();
-  });
-
-  /* ── PAGINATION (dinamis) ───────────────────────────────── */
-  const PER_PAGE = 10;
-  let currentPage = 1;
-
-  function getVisibleRows() {
-    return getDataRows().filter(r => r.style.display !== 'none');
-  }
-
-  function renderPagination() {
-    const rows  = getVisibleRows();
-    const total = rows.length;
-
-    if (total === 0) {
-      document.getElementById('pagInfo').textContent = '';
-      document.getElementById('pagBtns').innerHTML = '';
-      return;
-    }
-
-    const pages = Math.ceil(total / PER_PAGE);
-    const start = (currentPage - 1) * PER_PAGE;
-    const end   = Math.min(start + PER_PAGE, total);
-
-    // show / hide rows per page
-    rows.forEach((r, i) => {
-      r.style.display = (i >= start && i < end) ? '' : 'none';
-    });
-
-    document.getElementById('pagInfo').textContent =
-      `Showing ${start + 1}–${end} of ${total} record${total !== 1 ? 's' : ''}`;
-
-    const btns = document.getElementById('pagBtns');
-    btns.innerHTML = '';
-
-    // Prev button
-    const prev     = document.createElement('button');
-    prev.className = 'pag-btn';
-    prev.innerHTML = '<i class="fas fa-chevron-left"></i>';
-    prev.disabled  = currentPage === 1;
-    prev.onclick   = () => { currentPage--; renderPagination(); };
-    btns.appendChild(prev);
-
-    // Page number buttons with ellipsis
-    const WING = 2;
-    for (let p = 1; p <= pages; p++) {
-      if (
-        p === 1 || p === pages ||
-        (p >= currentPage - WING && p <= currentPage + WING)
-      ) {
-        const b       = document.createElement('button');
-        b.className   = 'pag-btn' + (p === currentPage ? ' active' : '');
-        b.textContent = p;
-        b.onclick = (() => {
-          const pg = p;
-          return () => { currentPage = pg; renderPagination(); };
-        })();
-        btns.appendChild(b);
-      } else if (
-        p === currentPage - WING - 1 ||
-        p === currentPage + WING + 1
-      ) {
-        const dot = document.createElement('span');
-        dot.textContent = '…';
-        dot.style.cssText =
-          'padding:0 4px;color:#94a3b8;font-size:0.82rem;' +
-          'display:flex;align-items:center;';
-        btns.appendChild(dot);
-      }
-    }
-
-    // Next button
-    const next     = document.createElement('button');
-    next.className = 'pag-btn';
-    next.innerHTML = '<i class="fas fa-chevron-right"></i>';
-    next.disabled  = currentPage >= pages;
-    next.onclick   = () => { currentPage++; renderPagination(); };
-    btns.appendChild(next);
-  }
-
-  // Init on page load
-  renderPagination();
-</script>
 
 </body>
 </html>

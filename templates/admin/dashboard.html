@@ -1,406 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin Dashboard — PCB Defect Detection</title>
+  <title>{{ _("Admin Dashboard — PCB Defect Detection") }}</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #eef3fb;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────── */
-    /* FIX: #1e40af → #1f2558 konsisten dengan seluruh aplikasi */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 240px;
-      background: #1e40af;
-      color: #eef3fb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 28px 22px;
-      z-index: 100;
-      transition: left 0.25s ease;
-    }
-
-    .sidebar .logo {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 32px; font-weight: 700; font-size: 0.95rem;
-    }
-
-    .sidebar .logo i {
-      background: #37d08f; color: #0f172a;
-      padding: 10px; border-radius: 12px;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-
-    .sidebar .menu a {
-      display: flex; align-items: center; gap: 12px;
-      color: #d6d8ef; padding: 11px 14px;
-      border-radius: 12px; text-decoration: none;
-      margin-bottom: 6px; font-size: 0.9rem;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
-
-    .sidebar .menu a.active {
-      background: rgba(255,255,255,0.07); color: #fff;
-      border-left: 3px solid #37d08f; padding-left: 11px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 16px; display: flex; align-items: center; gap: 12px;
-    }
-
-    .user-info { font-size: 12px; line-height: 1.5; }
-
-    /* ── MAIN ────────────────────────────────────────────────── */
-    .main { margin-left: 240px; padding: 32px 32px 48px; }
-
-    .page-heading {
-      display: flex; align-items: flex-start;
-      justify-content: space-between; gap: 16px;
-      margin-bottom: 28px; flex-wrap: wrap;
-    }
-
-    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
-    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
-
-    .page-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-start; }
-
-    .btn-act {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 18px; border-radius: 10px;
-      font-size: 0.84rem; font-weight: 600; cursor: pointer;
-      border: none; transition: opacity 0.15s; text-decoration: none;
-      white-space: nowrap;
-    }
-
-    .btn-act:hover { opacity: 0.85; }
-    .btn-act.primary { background: #1f2558; color: #fff; }
-    .btn-act.ghost   { background: #fff; color: #1f2558; border: 1px solid #e2e8f0; }
-
-    /* ── PANEL ───────────────────────────────────────────────── */
-    .panel {
-      background: #fff; border-radius: 20px;
-      padding: 24px 28px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 20px; padding-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .icon-badge {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
-
-    /* ── STAT CARDS ──────────────────────────────────────────── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px; margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: #fff; border-radius: 18px;
-      padding: 22px 24px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      display: flex; align-items: center; gap: 16px;
-    }
-
-    .stat-icon {
-      width: 50px; height: 50px; border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.25rem; flex-shrink: 0;
-    }
-
-    .stat-label {
-      font-size: 0.75rem; color: #6b7280; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px;
-    }
-
-    .stat-value {
-      font-size: 1.9rem; font-weight: 800; color: #1e293b; line-height: 1;
-    }
-
-    /* FIX: class sm untuk nilai teks panjang seperti "spurious_copper" */
-    .stat-value.sm { font-size: 1.05rem; line-height: 1.3; }
-    .stat-sub { font-size: 0.76rem; color: #94a3b8; margin-top: 4px; }
-
-    /* ── CHARTS GRID ─────────────────────────────────────────── */
-    /* FIX: .chart-grid sebelumnya tidak didefinisikan di CSS */
-    .charts-grid {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 20px; margin-bottom: 24px;
-    }
-
-    .chart-box { height: 300px; }
-
-    /* ── BOTTOM GRID ─────────────────────────────────────────── */
-    .bottom-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.4fr;
-      gap: 20px;
-    }
-
-    /* Top technicians list */
-    .tech-list { display: flex; flex-direction: column; gap: 0; }
-
-    .tech-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 0; border-bottom: 1px solid #f8fafc;
-    }
-
-    .tech-item:last-child { border-bottom: none; }
-    .tech-name  { font-weight: 700; color: #1e293b; font-size: 0.9rem; }
-    .tech-count { font-size: 0.8rem; color: #6b7280; margin-top: 2px; }
-
-    .tech-rank {
-      background: #eff6ff; color: #1d4ed8;
-      padding: 4px 10px; border-radius: 999px;
-      font-weight: 700; font-size: 0.78rem; flex-shrink: 0;
-    }
-
-    /* ── TABLE ───────────────────────────────────────────────── */
-    .hist-table { width: 100%; border-collapse: collapse; }
-    .hist-table thead tr { border-bottom: 2px solid #f1f5f9; }
-
-    .hist-table th {
-      padding: 10px 12px; font-size: 0.74rem; font-weight: 700;
-      color: #6b7280; text-transform: uppercase;
-      letter-spacing: 0.04em; text-align: left;
-    }
-
-    .hist-table tbody tr {
-      border-bottom: 1px solid #f8fafc; transition: background 0.1s;
-    }
-
-    .hist-table tbody tr:hover { background: #f8fafc; }
-
-    .hist-table td {
-      padding: 11px 12px; font-size: 0.84rem;
-      color: #374151; vertical-align: middle;
-    }
-
-    /* Thumbnail */
-    .td-thumb {
-      width: 56px; height: 40px; object-fit: contain;
-      border-radius: 6px; background: #0f172a;
-      border: 1px solid #e2e8f0; display: block;
-    }
-
-    .td-thumb-empty {
-      width: 56px; height: 40px; border-radius: 6px;
-      border: 1px solid #e2e8f0; background: #f1f5f9;
-      display: flex; align-items: center; justify-content: center;
-      color: #cbd5e1; font-size: 0.85rem;
-    }
-
-    /* Defect badges — konsisten dengan semua halaman */
-    .defect-badge {
-      display: inline-block; padding: 3px 9px;
-      border-radius: 999px; font-size: 0.73rem;
-      font-weight: 700; white-space: nowrap;
-    }
-
-    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
-    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
-    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
-    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
-    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
-    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
-    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
-    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
-    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
-
-    /* Status pill */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 3px 9px; border-radius: 999px;
-      font-size: 0.73rem; font-weight: 700;
-    }
-
-    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
-    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
-
-    /* Accuracy mini bar */
-    .acc-num   { font-size: 0.78rem; font-weight: 700; margin-bottom: 2px; }
-    .acc-track { height: 4px; border-radius: 999px; background: #e5e7eb; overflow: hidden; width: 60px; }
-    .acc-fill  {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-    }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
-    @media (max-width: 1300px) {
-      .stats-grid  { grid-template-columns: repeat(2, 1fr); }
-      .charts-grid { grid-template-columns: 1fr; }
-      .bottom-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 991px) {
-      .sidebar { left: -240px; }
-      .sidebar.show { left: 0; }
-      .main { margin-left: 0; padding: 20px 16px 40px; }
-      .menu-toggle { display: block !important; }
-    }
-
-    @media (max-width: 600px) {
-      .stats-grid { grid-template-columns: 1fr; }
-    }
-
-    .menu-toggle {
-      display: none; background: none; border: none;
-      font-size: 1.4rem; cursor: pointer; color: #1f2558;
-      padding: 4px 8px; border-radius: 8px;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% include 'shared/i18n.html' %}
 </head>
-<body>
+<body class="view-admin-dashboard">
 
-<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
-<div id="sidebar" class="sidebar">
-  <div>
-    <div class="logo">
-      <i class="fas fa-microchip"></i>
-      <span>PCB Defect<br>Detection</span>
-    </div>
-    <div class="menu">
-      <a href="{{ url_for('admin_dashboard') }}" class="active">
-        <i class="fas fa-chart-line"></i> Dashboard
-      </a>
-      <a href="{{ url_for('admin_manage_user') }}">
-        <i class="fas fa-users"></i> Manage User
-      </a>
-      <a href="{{ url_for('admin_report') }}">
-        <i class="fas fa-file-alt"></i> Report
-      </a>
-    </div>
-  </div>
-  <div class="sidebar-footer">
-    <div class="dropdown">
-      <a href="#" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
-      </a>
-      <ul class="dropdown-menu">
-        <li><a class="dropdown-item" href="/logout">Logout</a></li>
-      </ul>
-    </div>
-    <div class="user-info">
-      <div style="font-weight:600">{{ username }}</div>
-      <div style="color:#94a3b8">{{ role }}</div>
-    </div>
-  </div>
-</div>
+{% include 'shared/sidebar.html' %}
 
-<!-- ── MAIN ─────────────────────────────────────────────────────── -->
 <main class="main">
+  {% include 'shared/workspace_context.html' %}
 
-  <!-- Page heading -->
   <div class="page-heading">
     <div style="display:flex;align-items:center;gap:12px">
-      <button class="menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-      </button>
+
       <div>
-        <h2>Admin Dashboard</h2>
-        <p>Real-time overview of technician performance and PCB inspection quality.</p>
+      <h2>{{ _("Overview") }}</h2>
+        <p>{{ _("Real-time overview of technician performance and PCB inspection quality.") }}</p>
       </div>
     </div>
     <div class="page-actions">
       <a href="{{ url_for('admin_manage_user') }}" class="btn-act ghost">
-        <i class="fas fa-users"></i> Manage User
+        <i class="fas fa-users"></i> {{ _("Technicians") }}
       </a>
       <a href="{{ url_for('admin_report') }}" class="btn-act primary">
-        <i class="fas fa-file-alt"></i> Report
+        <i class="fas fa-file-alt"></i> {{ _("Report") }}
       </a>
     </div>
   </div>
 
-  <!-- ══ 1. STAT CARDS ════════════════════════════════════════ -->
   <div class="stats-grid">
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#eff6ff;color:#1d4ed8">
+      <div class="stat-icon" >
         <i class="fas fa-microchip"></i>
       </div>
       <div>
-        <div class="stat-label">PCB Inspected</div>
-        <div class="stat-value">{{ total_detections or 0 }}</div>
-        <div class="stat-sub">All time</div>
+        <div class="stat-label">{{ _("PCB Inspected") }}</div>
+        <div class="stat-value">{{ _(total_detections or 0) }}</div>
+        <div class="stat-sub">{{ _("All time") }}</div>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#f0fdf4;color:#16a34a">
+      <div class="stat-icon" >
         <i class="fas fa-users"></i>
       </div>
       <div>
-        <div class="stat-label">Technicians</div>
-        <div class="stat-value">{{ total_technicians or 0 }}</div>
-        <div class="stat-sub">Registered</div>
+        <div class="stat-label">{{ _("Technicians") }}</div>
+        <div class="stat-value">{{ _(total_technicians or 0) }}</div>
+        <div class="stat-sub">{{ _("Registered") }}</div>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fefce8;color:#ca8a04">
+      <div class="stat-icon" >
         <i class="fas fa-user-check"></i>
       </div>
       <div>
-        <div class="stat-label">Active</div>
-        <div class="stat-value">{{ active_technicians or 0 }}</div>
-        <div class="stat-sub">Technicians</div>
+        <div class="stat-label">{{ _("Active") }}</div>
+        <div class="stat-value">{{ _(active_technicians or 0) }}</div>
+        <div class="stat-sub">{{ _("Technicians") }}</div>
       </div>
     </div>
 
     <div class="stat-card">
-      <div class="stat-icon" style="background:#fef2f2;color:#dc2626">
+      <div class="stat-icon" >
         <i class="fas fa-exclamation-triangle"></i>
       </div>
       <div>
-        <div class="stat-label">Top Defect</div>
-        <!-- FIX: class sm agar teks panjang tidak overflow card -->
-        <div class="stat-value sm">{{ top_defect or 'N/A' }}</div>
-        <div class="stat-sub">Most frequent</div>
+        <div class="stat-label">{{ _("Top Defect") }}</div>
+
+        <div class="stat-value sm">{{ _((top_defect or 'N/A') | replace('_', ' ')) }}</div>
+        <div class="stat-sub">{{ _("Most frequent") }}</div>
       </div>
     </div>
 
   </div>
 
-  <!-- ══ 2. CHARTS ════════════════════════════════════════════ -->
-  <!-- FIX: .charts-grid sebelumnya tidak ada di CSS → layout rusak -->
   <div class="charts-grid">
 
-    <!-- Line chart: daily detection trend -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
           <i class="fas fa-chart-line"></i>
         </div>
         <div>
-          <h5>Detection Trend</h5>
-          <p>Daily detection count over time</p>
+          <h5>{{ _("Detection Trend") }}</h5>
+          <p>{{ _("Daily detection count over time") }}</p>
         </div>
       </div>
       <div class="chart-box">
@@ -408,15 +104,14 @@
       </div>
     </div>
 
-    <!-- Doughnut chart: defect distribution -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#fef2f2;color:#dc2626">
           <i class="fas fa-chart-pie"></i>
         </div>
         <div>
-          <h5>Defect Distribution</h5>
-          <p>Proportion by defect type</p>
+          <h5>{{ _("Defect Distribution") }}</h5>
+          <p>{{ _("Proportion by defect type") }}</p>
         </div>
       </div>
       <div class="chart-box"
@@ -427,18 +122,16 @@
 
   </div>
 
-  <!-- ══ 3. BOTTOM GRID: top technicians + recent activity ═══ -->
   <div class="bottom-grid">
 
-    <!-- Top 5 technicians -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#f0fdf4;color:#16a34a">
           <i class="fas fa-trophy"></i>
         </div>
         <div>
-          <h5>Top 5 Technicians</h5>
-          <p>Ranked by detection count</p>
+          <h5>{{ _("Top 5 Technicians") }}</h5>
+          <p>{{ _("Ranked by detection count") }}</p>
         </div>
       </div>
 
@@ -446,30 +139,29 @@
         {% for tech in top_technicians %}
         <div class="tech-item">
           <div>
-            <div class="tech-name">{{ tech.username or 'Unknown' }}</div>
-            <div class="tech-count">{{ tech.total_detections }} detections</div>
+            <div class="tech-name">{{ tech.username or _('Unknown') }}</div>
+            <div class="tech-count">{{ _(tech.total_detections) }} {{ _("detections") }}</div>
           </div>
-          <span class="tech-rank">#{{ loop.index }}</span>
+          <span class="tech-rank">#{{ _(loop.index) }}</span>
         </div>
         {% else %}
         <div style="text-align:center;padding:32px;color:#94a3b8">
           <i class="fas fa-users"
              style="font-size:2rem;display:block;margin-bottom:10px;color:#cbd5e1"></i>
-          No technician data yet.
+          {{ _("No technician data yet.") }}
         </div>
         {% endfor %}
       </div>
     </div>
 
-    <!-- Recent activity table -->
     <div class="panel">
       <div class="panel-header">
         <div class="icon-badge" style="background:#f5f3ff;color:#7c3aed">
           <i class="fas fa-table"></i>
         </div>
         <div>
-          <h5>Recent Activity</h5>
-          <p>Latest 6 detections across all technicians</p>
+          <h5>{{ _("Recent Activity") }}</h5>
+          <p>{{ _("Latest 6 detections across all technicians") }}</p>
         </div>
       </div>
 
@@ -478,26 +170,25 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Image</th>       {# FIX: kolom baru — backend kirim image_url tapi tidak ditampilkan #}
-              <th>Technician</th>
-              <th>Defect Type</th>
-              <th>Accuracy</th>
-              <th>Status</th>
-              <th>Date</th>
+              <th>{{ _("Image") }}</th>
+              <th>{{ _("Technician") }}</th>
+              <th>{{ _("Defect Type") }}</th>
+              <th>{{ _("Status") }}</th>
+              <th>{{ _("Date") }}</th>
             </tr>
           </thead>
           <tbody>
             {% if recent_history %}
               {% for item in recent_history %}
               <tr>
-                <td style="font-weight:700;color:#94a3b8">{{ loop.index }}</td>
+                <td style="font-weight:700;color:#94a3b8">{{ _(loop.index) }}</td>
 
                 <td>
-                  {# FIX: tampilkan gambar dengan image_url yang sudah diproses get_image_url() #}
+
                   {% if item.image_url %}
                     <img class="td-thumb"
                          src="{{ item.image_url }}"
-                         alt="{{ item.defect_type }}" />
+                         alt="{{ _(item.defect_type) }}" />
                   {% else %}
                     <div class="td-thumb-empty">
                       <i class="fas fa-image"></i>
@@ -505,21 +196,14 @@
                   {% endif %}
                 </td>
 
-                <td style="font-weight:600">{{ item.username or '—' }}</td>
+                <td style="font-weight:600">{{ item.username or _('—') }}</td>
 
                 <td>
-                  {# FIX: pakai defect-badge class konsisten, bukan inline style merah semua #}
+
                   <span class="defect-badge
                     defect-{{ (item.defect_type or 'no-defect') | replace('_','-') }}">
-                    {{ item.defect_type or 'No Defect' }}
+                    {{ _(item.defect_type or 'No Defect') }}
                   </span>
-                </td>
-
-                <td>
-                  <div class="acc-num">{{ item.accuracy }}%</div>
-                  <div class="acc-track">
-                    <div class="acc-fill" style="width:{{ item.accuracy }}%"></div>
-                  </div>
                 </td>
 
                 <td>
@@ -527,29 +211,28 @@
                     {{ 'defect' if item.status == 'DEFECT' else 'normal' }}">
                     <i class="fas fa-{{ 'exclamation-circle'
                        if item.status == 'DEFECT' else 'check-circle' }}"></i>
-                    {{ item.status or 'NORMAL' }}
+                    {{ _(item.status or 'NORMAL') }}
                   </span>
                 </td>
 
                 <td>
-                  {# FIX: strftime() agar tidak tampil sebagai repr datetime Python #}
-                  {# FIX: None-guard jika created_at NULL di DB #}
+
                   <div style="font-size:0.83rem;font-weight:600">
-                    {{ item.created_at.strftime('%d %b %Y') if item.created_at else '—' }}
+                    {{ _(item.created_at.strftime('%d %b %Y') if item.created_at else '—') }}
                   </div>
                   <div style="font-size:0.75rem;color:#94a3b8">
-                    {{ item.created_at.strftime('%H:%M') if item.created_at else '' }}
+                    {{ _(item.created_at.strftime('%H:%M') if item.created_at else '') }}
                   </div>
                 </td>
               </tr>
               {% endfor %}
             {% else %}
               <tr>
-                <td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">
+                <td colspan="6" style="text-align:center;padding:40px;color:#94a3b8">
                   <i class="fas fa-inbox"
                      style="display:block;font-size:2rem;
                             margin-bottom:10px;color:#cbd5e1"></i>
-                  No detection history yet.
+                  {{ _("No detection history yet.") }}
                 </td>
               </tr>
             {% endif %}
@@ -558,22 +241,17 @@
       </div>
     </div>
 
-  </div><!-- /bottom-grid -->
+  </div>
 
 </main>
 
-<!-- ── SCRIPTS ───────────────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
   /* Sidebar toggle (mobile) */
-  function toggleSidebar() {
-    document.getElementById('sidebar').classList.toggle('show');
-  }
 
-  /* FIX: palette konsisten dengan seluruh aplikasi */
-  const PALETTE = ['#ef4444','#f97316','#3b82f6','#8b5cf6','#22c55e','#0ea5e9'];
+  const PALETTE = ['#c68b72','#d1b375','#8ca995','#b3a19f','#9cae79','#91b8af'];
 
   /* ── DAILY TREND (line) ───────────────────────────────────── */
   new Chart(document.getElementById('trendChart'), {
@@ -581,15 +259,15 @@
     data: {
       labels:   {{ daily_labels | tojson | safe }},
       datasets: [{
-        label:                'Detections',
+        label:                t('Detections'),
         data:                 {{ daily_values | tojson | safe }},
-        /* FIX: warna konsisten #1f2558 & #37d08f, bukan #3b82f6 */
-        borderColor:          '#1f2558',
-        backgroundColor:      'rgba(31,37,88,0.07)',
+
+        borderColor:          '#668464',
+        backgroundColor:      'rgba(102,132,100,0.07)',
         borderWidth:          2.5,
         fill:                 true,
         tension:              0.4,
-        pointBackgroundColor: '#37d08f',
+        pointBackgroundColor: '#8fae83',
         pointBorderColor:     '#fff',
         pointBorderWidth:     2,
         pointRadius:          5,
@@ -603,7 +281,7 @@
       scales: {
         y: {
           beginAtZero: true,
-          /* FIX: hapus max:100 yang hardcoded — auto-scale dari Chart.js */
+
           grid:  { color: '#f1f5f9' },
           ticks: { precision: 0, color: '#94a3b8', font: { size: 11 } }
         },
@@ -619,7 +297,7 @@
   new Chart(document.getElementById('distributionChart'), {
     type: 'doughnut',
     data: {
-      labels:   {{ defect_labels | tojson | safe }},
+      labels:   {{ defect_labels | tojson }}.map(t),
       datasets: [{
         data:            {{ defect_values | tojson | safe }},
         backgroundColor: PALETTE,

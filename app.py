@@ -7,22 +7,25 @@ DB     : MySQL (via db.get_db())
 """
 
 import csv
-import hashlib
 import io
 import os
 import time
-from typing import Optional
 
 import cv2
+import numpy as np
 import matplotlib
 matplotlib.use('Agg')          # non-interactive backend — wajib di server
 import matplotlib.pyplot as plt
-from flask import Flask, flash, redirect, render_template, request, send_file, session, url_for
+from flask import Flask, redirect, render_template, request, send_file, session, url_for
 from openpyxl import Workbook
 from ultralytics import YOLO
 from werkzeug.utils import secure_filename
 
-from db import get_db, get_user, update_password
+from db import get_db, get_user, hash_password, update_password
+from detection_store import save_detection
+from inspection_workflow import create_workflow, migrate_workflow
+from image_store import create_image_routes, image_url, make_image, migrate_image_schema, read_image
+from i18n import init_languages, translate as _
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -31,10 +34,10 @@ from db import get_db, get_user, update_password
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production')
+init_languages(app)
+app.register_blueprint(create_workflow(lambda: get_db()))
+app.register_blueprint(create_image_routes(lambda: get_db()))
 
-UPLOAD_FOLDER    = 'static/uploads'
-RESULT_FOLDER    = 'static/results'
-NORMALIZE_FOLDER = 'static/normalize'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 
 DEFECT_TYPES = [
@@ -43,18 +46,7 @@ DEFECT_TYPES = [
     'spurious_copper',
 ]
 
-FOLLOW_UP_STATUSES = (
-    'Belum ditinjau',
-    'Sedang diperiksa',
-    'Perlu perbaikan',
-    'Selesai',
-)
-
-app.config['UPLOAD_FOLDER']      = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 MB
-
-for _folder in (UPLOAD_FOLDER, RESULT_FOLDER, NORMALIZE_FOLDER):
-    os.makedirs(_folder, exist_ok=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -84,22 +76,17 @@ def allowed_file(filename: str) -> bool:
 
 
 def get_image_url(image_path: str) -> str:
-    """Convert a stored DB image path to a usable URL.
-
-    The DB stores paths like '/static/results/result_123.jpg'.
-    • If the path already starts with '/static/' → return as-is (valid URL).
-    • Otherwise fall back to the uploads folder (legacy rows).
-    """
-    if not image_path:
-        return ''
-    if image_path.startswith('/static/'):
-        return image_path                        # already a valid URL
-    # legacy fallback: bare filename stored without /static/ prefix
-    return url_for('static', filename=f'uploads/{os.path.basename(image_path)}')
+    """Resolve image links to the authenticated database image endpoint."""
+    return image_url(image_path)
 
 
-def hash_password(password: str) -> str:
-    return hashlib.md5(password.encode()).hexdigest()
+@app.before_request
+def redirect_legacy_image():
+    if request.path.startswith(('/static/uploads/', '/static/results/', '/static/normalize/')):
+        try:
+            return redirect(image_url(request.path), code=302)
+        except ValueError:
+            return '', 404
 
 
 def unique_filename(original: str) -> str:
@@ -117,7 +104,6 @@ def _build_defect_summary(defect_counts: dict, total: int) -> list:
             'defect_type': defect,
             'count':       count,
             'percent':     percent,
-            'badge_color': 'danger' if defect == 'spurious_copper' else 'primary',
         })
     return summary
 
@@ -150,7 +136,6 @@ def _migrate():
                 source_image_path VARCHAR(255),
                 image_path     VARCHAR(255),
                 defect_type    VARCHAR(100),
-                accuracy       DECIMAL(5,2),
                 status         VARCHAR(50),
                 follow_up_status VARCHAR(40) NOT NULL DEFAULT 'Belum ditinjau',
                 created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -180,22 +165,6 @@ def _migrate():
                    ADD COLUMN source_image_path VARCHAR(255) NULL AFTER pcb_id"""
             )
 
-        cursor.execute(
-            """SELECT id, image_path FROM detections
-               WHERE source_image_path IS NULL AND image_path IS NOT NULL"""
-        )
-        for detection_id, image_path in cursor.fetchall():
-            result_filename = os.path.basename(image_path.replace('\\', '/'))
-            if not result_filename.startswith('result_'):
-                continue
-            source_filename = result_filename[len('result_'):]
-            source_path = os.path.join(UPLOAD_FOLDER, source_filename)
-            if os.path.isfile(source_path) and allowed_file(source_filename):
-                cursor.execute(
-                    'UPDATE detections SET source_image_path = %s WHERE id = %s',
-                    (f'/static/uploads/{source_filename}', detection_id),
-                )
-
         cursor.execute("""
             SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
             WHERE TABLE_SCHEMA = DATABASE()
@@ -208,6 +177,8 @@ def _migrate():
                    ADD COLUMN follow_up_status VARCHAR(40) NOT NULL
                    DEFAULT 'Belum ditinjau' AFTER status"""
             )
+        migrate_workflow(cursor)
+        migrate_image_schema(cursor)
         conn.commit()
     except Exception as exc:
         print(f'[migrate] warning: {exc}')
@@ -296,7 +267,9 @@ def login():
 
 @app.route('/logout')
 def logout():
+    language = session.get('language', 'id')
     session.clear()
+    session['language'] = language
     return redirect('/login')
 
 
@@ -362,7 +335,7 @@ def admin_dashboard():
         data['top_technicians'] = cursor.fetchall()
 
         cursor.execute("""
-            SELECT d.id, d.image_path, d.defect_type, d.accuracy,
+            SELECT d.id, d.image_path, d.defect_type,
                    d.status, d.created_at, u.username
             FROM detections d
             LEFT JOIN users u ON u.id = d.technician_id
@@ -534,7 +507,6 @@ def admin_report():
     if session.get('role') != 'admin':
         return redirect('/login')
 
-    # FIX: pakai start_date + end_date (range) sesuai form di admin_report.html
     if request.method == 'POST':
         start_date = request.form.get('start_date', '').strip()
         end_date   = request.form.get('end_date',   '').strip()
@@ -610,7 +582,7 @@ def admin_report():
         data['defect_values'] = [int(r['cnt'])     for r in rows]
 
         cursor.execute(
-            f"""SELECT d.id, d.image_path, d.defect_type, d.accuracy,
+            f"""SELECT d.id, d.image_path, d.defect_type,
                        d.status, d.created_at, u.username
                 FROM detections d
                 LEFT JOIN users u ON u.id = d.technician_id
@@ -620,10 +592,9 @@ def admin_report():
         )
         data['recent_history'] = cursor.fetchall()
 
-        # FIX: cek request.form.get('export') untuk trigger download CSV
         if request.method == 'POST' and request.form.get('export'):
             cursor.execute(
-                f"""SELECT d.id, d.image_path, d.defect_type, d.accuracy,
+                f"""SELECT d.id, d.image_path, d.defect_type,
                            d.status, d.created_at, u.username
                     FROM detections d
                     LEFT JOIN users u ON u.id = d.technician_id
@@ -635,14 +606,13 @@ def admin_report():
 
             out    = io.StringIO()
             writer = csv.writer(out)
-            writer.writerow(['ID', 'Technician', 'Defect Type', 'Accuracy', 'Status', 'Date', 'Image'])
+            writer.writerow([_(label) for label in ('ID', 'Technician', 'Defect Type', 'Status', 'Date', 'Image')])
             for row in export_rows:
                 writer.writerow([
                     row.get('id'),
-                    row.get('username') or 'Unknown',
-                    row.get('defect_type'),
-                    row.get('accuracy'),
-                    row.get('status'),
+                    row.get('username') or _('Unknown'),
+                    _(row.get('defect_type')),
+                    _(row.get('status')),
                     row.get('created_at'),
                     row.get('image_path'),
                 ])
@@ -677,7 +647,6 @@ def technician_dashboard():
     cursor  = conn.cursor(dictionary=True)
 
     total_detections  = 0
-    avg_accuracy      = 0
     top_defect        = 'N/A'
     defect_labels     = []
     defect_values     = []
@@ -686,12 +655,11 @@ def technician_dashboard():
 
     try:
         cursor.execute(
-            'SELECT COUNT(*) AS total, AVG(accuracy) AS avg_acc FROM detections WHERE technician_id = %s',
+            'SELECT COUNT(*) AS total FROM detections WHERE technician_id = %s',
             (tech_id,),
         )
         row = cursor.fetchone()
         total_detections = row['total'] or 0
-        avg_accuracy     = round(row['avg_acc'] or 0, 2)
 
         cursor.execute(
             """SELECT defect_type, COUNT(*) AS cnt FROM detections
@@ -709,14 +677,13 @@ def technician_dashboard():
         defect_summary = _build_defect_summary(counts, total_detections)
 
         cursor.execute(
-            """SELECT id, image_path, defect_type, accuracy, status, created_at
+            """SELECT id, image_path, defect_type, status, created_at
                FROM detections WHERE technician_id = %s
                ORDER BY created_at DESC LIMIT 6""",
             (tech_id,),
         )
         recent_detections = cursor.fetchall()
         for row in recent_detections:
-            # FIX: get_image_url sekarang cek /static/ prefix, tidak salah folder lagi
             row['image_url'] = get_image_url(row['image_path'])
             row['file_name'] = os.path.basename(row['image_path']) if row['image_path'] else ''
 
@@ -727,7 +694,6 @@ def technician_dashboard():
     return render_template(
         'technician/dashboard.html',
         total_detections=total_detections,
-        avg_accuracy=avg_accuracy,
         top_defect=top_defect,
         defect_labels=defect_labels,
         defect_values=defect_values,
@@ -762,6 +728,7 @@ def technician_detection():
     return render_template(
         'technician/detection.html',
         existing_pcb_ids=existing_pcb_ids,
+        pcb_id=request.args.get('pcb_id', '')[:100],
     )
 
 
@@ -769,29 +736,34 @@ def technician_detection():
 # DETECT (POST) — core pipeline
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _save_feature_map(filename: str) -> Optional[str]:
-    """Generate and save the backbone feature-map heatmap.
-
-    Returns the URL string, or None if no feature map is available.
-    FIX: return type changed from 'str | None' to Optional[str]
-         so this works on Python 3.8 and 3.9 as well as 3.10+.
-    """
+def _save_feature_map(filename: str, images: list) -> str | None:
+    """Encode the backbone feature map as an in-memory PNG asset."""
     if not _feature_maps:
         return None
 
     fmap = _feature_maps[0][0][0].numpy()     # shape: (H, W)
     fmap = (fmap - fmap.min()) / (fmap.max() - fmap.min() + 1e-8)
 
-    feature_filename = f'feature_{filename}'
-    feature_path     = os.path.join(RESULT_FOLDER, feature_filename)
+    feature_filename = f'feature_{os.path.splitext(filename)[0]}.png'
+    feature_path = f'/images/results/{feature_filename}'
 
     fig, ax = plt.subplots(figsize=(6, 6))
     ax.imshow(fmap, cmap='viridis')
     ax.axis('off')
-    fig.savefig(feature_path, bbox_inches='tight', pad_inches=0)
-    plt.close(fig)
+    try:
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', bbox_inches='tight', pad_inches=0)
+        images.append(make_image(feature_path, buffer.getvalue()))
+    finally:
+        plt.close(fig)
+    return feature_path
 
-    return f'/static/results/{feature_filename}'
+
+def _encoded_image(path, pixels):
+    success, content = cv2.imencode(os.path.splitext(path)[1], pixels)
+    if not success:
+        raise ValueError('Gambar gagal dikodekan')
+    return make_image(path, content.tobytes())
 
 
 @app.route('/detect', methods=['POST'])
@@ -839,6 +811,7 @@ def detect():
         cursor.close()
         conn.close()
 
+    images = []
     if registered_image:
         if file and file.filename:
             return render_template(
@@ -847,26 +820,21 @@ def detect():
                 pcb_id=pcb_id,
             )
 
-        source_image_path = registered_image[0]
+        source_image_path = image_url(registered_image[0])
         source_filename = os.path.basename(source_image_path.replace('\\', '/'))
-        if (
-            source_image_path != f'/static/uploads/{source_filename}'
-            or not allowed_file(source_filename)
-        ):
-            return render_template(
-                'technician/detection.html',
-                error='Path gambar tersimpan tidak valid. Unggah gambar kembali.',
-                pcb_id=pcb_id,
-            )
-
         filename = unique_filename(source_filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], source_filename)
-        if not os.path.isfile(filepath):
+        conn = get_db()
+        try:
+            stored_image = read_image(conn, source_image_path, session.get('user_id'))
+        finally:
+            conn.close()
+        if not stored_image:
             return render_template(
                 'technician/detection.html',
                 error='Gambar asli PCB tidak ditemukan. Unggah gambar kembali.',
                 pcb_id=pcb_id,
             )
+        original_content = bytes(stored_image['content'])
     elif existing_pcb:
         return render_template(
             'technician/detection.html',
@@ -880,9 +848,8 @@ def detect():
                                    pcb_id=pcb_id)
 
         filename = unique_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
-        source_image_path = f'/static/uploads/{filename}'
+        original_content = file.read()
+        source_image_path = f'/images/uploads/{filename}'
     else:
         return render_template(
             'technician/detection.html',
@@ -893,28 +860,37 @@ def detect():
     original_image = source_image_path
 
     # ── read image ───────────────────────────────────────────────────────────
-    img = cv2.imread(filepath)
+    try:
+        img = cv2.imdecode(np.frombuffer(original_content, dtype=np.uint8), cv2.IMREAD_COLOR)
+    except cv2.error:
+        img = None
     if img is None:
         return render_template('technician/detection.html',
                                error='Could not read the uploaded image.',
                                pcb_id=pcb_id)
     height, width = img.shape[:2]
+    if not registered_image:
+        try:
+            images.append(make_image(source_image_path, original_content))
+        except ValueError:
+            return render_template('technician/detection.html',
+                                   error='Format gambar harus PNG atau JPEG.', pcb_id=pcb_id), 400
 
     # ── step 1: resize 640×640 ───────────────────────────────────────────────
     resized         = cv2.resize(img, (640, 640))
     resize_filename = f'resize_{filename}'
-    cv2.imwrite(os.path.join(RESULT_FOLDER, resize_filename), resized)
-    resize_image = f'/static/results/{resize_filename}'
+    resize_image = f'/images/results/{resize_filename}'
+    images.append(_encoded_image(resize_image, resized))
 
     # ── step 2: normalize (0–255 → 0–1, display only) ───────────────────────
     normalized_display = (resized.astype('float32') / 255.0 * 255).astype('uint8')
     norm_filename      = f'normalize_{filename}'
-    cv2.imwrite(os.path.join(NORMALIZE_FOLDER, norm_filename), normalized_display)
-    normalize_image = f'/static/normalize/{norm_filename}'
+    normalize_image = f'/images/normalize/{norm_filename}'
+    images.append(_encoded_image(normalize_image, normalized_display))
 
     # ── step 3: YOLO inference ───────────────────────────────────────────────
     try:
-        results = model.predict(source=filepath, conf=0.25, save=False)
+        results = model.predict(source=img, conf=0.25, save=False)
     except Exception as exc:
         print(f'[detect] model error: {exc}')
         return render_template('technician/detection.html',
@@ -922,32 +898,30 @@ def detect():
                                pcb_id=pcb_id)
 
     # ── step 4: feature map ──────────────────────────────────────────────────
-    feature_image = _save_feature_map(filename)
+    feature_image = _save_feature_map(filename, images)
 
     # ── step 5: parse detections ─────────────────────────────────────────────
     result_obj     = results[0]
     defect_type    = 'No Defect'
-    accuracy       = 0.0
     status         = 'NORMAL'
     detections     = []
     cropped_images = []
 
     if len(result_obj.boxes) > 0:
-        confidences = [float(b.conf[0]) for b in result_obj.boxes]
-        best_box    = result_obj.boxes[confidences.index(max(confidences))]
+        best_box = max(result_obj.boxes, key=lambda box: float(box.conf[0]))
 
         defect_type = model.names[int(best_box.cls[0])]
-        accuracy    = round(float(best_box.conf[0]) * 100, 2)
         status      = 'DEFECT'
 
         for i, box in enumerate(result_obj.boxes):
             cls_id        = int(box.cls[0])
-            conf          = round(float(box.conf[0]) * 100, 2)
             x1, y1, x2, y2 = map(int, box.xyxy[0])
 
             detections.append({
-                'class': model.names[cls_id], 'confidence': conf,
-                'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
+                'class_id': cls_id,
+                'class': model.names[cls_id],
+                'x1': max(0, min(width, x1)), 'y1': max(0, min(height, y1)),
+                'x2': max(0, min(width, x2)), 'y2': max(0, min(height, y2)),
             })
 
             cx1, cy1 = max(0, x1), max(0, y1)
@@ -955,31 +929,29 @@ def detect():
             if cx2 > cx1 and cy2 > cy1:
                 crop          = img[cy1:cy2, cx1:cx2]
                 crop_filename = f'crop_{i}_{filename}'
-                cv2.imwrite(os.path.join(RESULT_FOLDER, crop_filename), crop)
+                crop_image = f'/images/results/{crop_filename}'
+                images.append(_encoded_image(crop_image, crop))
                 cropped_images.append({
                     'class':      model.names[cls_id],
-                    'confidence': conf,
-                    'image':      f'/static/results/{crop_filename}',
+                    'image':      crop_image,
                 })
 
     # ── step 6: save annotated result image ──────────────────────────────────
     result_filename = f'result_{filename}'
-    cv2.imwrite(os.path.join(RESULT_FOLDER, result_filename), result_obj.plot())
-    result_image = f'/static/results/{result_filename}'
+    result_image = f'/images/results/{result_filename}'
+    images.append(_encoded_image(result_image, result_obj.plot(conf=False)))
 
     # ── step 7: persist to DB ────────────────────────────────────────────────
     conn   = get_db()
-    cursor = conn.cursor()
     try:
-        cursor.execute(
-            """INSERT INTO detections
-               (technician_id, pcb_id, source_image_path, image_path,
-                defect_type, accuracy, status)
-               VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-            (session.get('user_id'), pcb_id, source_image_path, result_image,
-             defect_type, accuracy, status),
+        save_detection(
+            conn, technician_id=session.get('user_id'), pcb_id=pcb_id,
+            source_image=source_image_path, result_image=result_image,
+            defect_type=defect_type, status=status,
+            objects=detections, width=width, height=height,
+            model_path='best.pt',
+            images=images,
         )
-        conn.commit()
     except Exception as exc:
         print(f'[detect] db insert error: {exc}')
         return render_template(
@@ -988,7 +960,6 @@ def detect():
             pcb_id=pcb_id,
         ), 500
     finally:
-        cursor.close()
         conn.close()
 
     speed = result_obj.speed
@@ -1001,7 +972,6 @@ def detect():
         feature_image=feature_image,
         image=result_image,
         result=defect_type,
-        accuracy=accuracy,
         status=status,
         width=width,
         height=height,
@@ -1028,7 +998,7 @@ def technician_history():
     cursor  = conn.cursor(dictionary=True)
     try:
         cursor.execute(
-            """SELECT id, pcb_id, image_path, defect_type, accuracy, status,
+            """SELECT id, pcb_id, image_path, defect_type, status,
                       follow_up_status, created_at
                FROM detections WHERE technician_id = %s
                ORDER BY created_at DESC""",
@@ -1036,8 +1006,6 @@ def technician_history():
         )
         history_rows = cursor.fetchall()
         for row in history_rows:
-            # FIX: get_image_url sekarang mengembalikan path /static/results/...
-            # yang sudah disimpan di DB — gambar bounding-box yang muncul, bukan original
             row['image_url'] = get_image_url(row['image_path'])
             row['file_name'] = os.path.basename(row['image_path']) if row['image_path'] else ''
     finally:
@@ -1052,70 +1020,15 @@ def technician_history_detail(detection_id):
     if session.get('role') != 'technician':
         return redirect('/login')
 
-    tech_id = session.get('user_id')
-    conn    = get_db()
-    cursor  = conn.cursor(dictionary=True)
-    try:
-        cursor.execute(
-            """SELECT id, pcb_id, image_path, defect_type, accuracy, status,
-                      follow_up_status, created_at
-               FROM detections WHERE id = %s AND technician_id = %s""",
-            (detection_id, tech_id),
-        )
-        detection = cursor.fetchone()
-        if not detection:
-            return redirect(url_for('technician_history'))
-        detection['image_url'] = get_image_url(detection['image_path'])
-        detection['file_name'] = (
-            os.path.basename(detection['image_path']) if detection['image_path'] else ''
-        )
-    finally:
-        cursor.close()
-        conn.close()
-
-    return render_template(
-        'technician/detail.html',
-        detection=detection,
-        follow_up_statuses=FOLLOW_UP_STATUSES,
-    )
+    return redirect(url_for('workflow.from_inspection', detection_id=detection_id))
 
 
 @app.route('/technician/history/<int:detection_id>/follow-up', methods=['POST'])
 def update_follow_up_status(detection_id):
     if session.get('role') != 'technician':
         return redirect('/login')
-
-    follow_up_status = request.form.get('follow_up_status', '').strip()
-    if follow_up_status not in FOLLOW_UP_STATUSES:
-        flash('Status tindak lanjut tidak valid.', 'danger')
-        return redirect(url_for('technician_history_detail', detection_id=detection_id))
-
-    conn   = get_db()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            'SELECT id FROM detections WHERE id = %s AND technician_id = %s',
-            (detection_id, session.get('user_id')),
-        )
-        if cursor.fetchone() is None:
-            conn.rollback()
-            flash('Inspeksi tidak ditemukan atau tidak dapat diakses.', 'danger')
-        else:
-            cursor.execute(
-                """UPDATE detections SET follow_up_status = %s
-                   WHERE id = %s AND technician_id = %s""",
-                (follow_up_status, detection_id, session.get('user_id')),
-            )
-            conn.commit()
-            flash('Status tindak lanjut berhasil diperbarui.', 'success')
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        cursor.close()
-        conn.close()
-
-    return redirect(url_for('technician_history_detail', detection_id=detection_id))
+    # Old bookmarked forms lead to the audited unit workflow without changing data.
+    return redirect(url_for('workflow.from_inspection', detection_id=detection_id))
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1128,11 +1041,10 @@ def technician_report():
         return redirect('/login')
 
     tech_id    = session.get('user_id')
-    start_date = ''
-    end_date   = ''
+    start_date = request.args.get('start_date', '').strip()
+    end_date   = request.args.get('end_date', '').strip()
     error      = None
     report_rows   = []
-    # FIX: default dict harus pakai .get() saat diakses — 'No Defect' tidak ada di DEFECT_TYPES
     defect_counts = {d: 0 for d in DEFECT_TYPES}
 
     if request.method == 'POST':
@@ -1143,7 +1055,7 @@ def technician_report():
 
     # Build query
     base_sql = """
-        SELECT id, pcb_id, image_path, defect_type, accuracy, status,
+        SELECT id, pcb_id, image_path, defect_type, status,
                follow_up_status, created_at
         FROM detections WHERE technician_id = %s
     """
@@ -1168,7 +1080,6 @@ def technician_report():
         report_rows = cursor.fetchall()
 
         for row in report_rows:
-            # FIX: defect_type bisa 'No Defect' → pakai .get() agar tidak KeyError
             dt = row.get('defect_type') or 'No Defect'
             defect_counts[dt] = defect_counts.get(dt, 0) + 1
             row['image_url']  = get_image_url(row['image_path'])
@@ -1176,23 +1087,21 @@ def technician_report():
 
         total_count = len(report_rows)
 
-        # FIX: export hanya jika tidak ada error validasi
         if request.method == 'POST' and request.form.get('export') and not error:
             wb = Workbook()
             ws = wb.active
-            ws.title = 'Report'
-            ws.append([
-                'Inspection ID', 'PCB ID', 'Defect Type', 'Accuracy',
+            ws.title = _('Report')
+            ws.append([_(label) for label in (
+                'Inspection ID', 'PCB ID', 'Defect Type',
                 'Detection Status', 'Follow-up Status', 'Date', 'File Name',
-            ])
+            )])
             for row in report_rows:
                 ws.append([
                     row['id'],
                     row.get('pcb_id') or '',
-                    row.get('defect_type') or 'No Defect',
-                    row['accuracy'],
-                    row['status'],
-                    row['follow_up_status'],
+                    _(row.get('defect_type') or 'No Defect'),
+                    _(row['status']),
+                    _(row['follow_up_status']),
                     row['created_at'],
                     os.path.basename(row['image_path']) if row['image_path'] else '',
                 ])

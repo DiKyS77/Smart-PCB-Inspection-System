@@ -1,0 +1,7 @@
+<script>
+  window.PCB_I18N = {{ browser_translations | tojson }};
+  window.t = function (text, values = {}) {
+    let result = Object.prototype.hasOwnProperty.call(window.PCB_I18N, text) ? window.PCB_I18N[text] : text;
+    return String(result).replace(/\{(\w+)\}/g, (match, key) => Object.prototype.hasOwnProperty.call(values, key) ? String(values[key]) : match);
+  };
+</script>

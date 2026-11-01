@@ -1,353 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ language }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Detection Detail — PCB Defect Detection</title>
+  <title>{{ _("Detection Detail — PCB Defect Detection") }}</title>
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #eef3fb;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    /* ── SIDEBAR ─────────────────────────────────────────────── */
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 240px;
-      background: #1f2558;
-      color: #eef3fb;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 28px 22px;
-      z-index: 100;
-    }
-
-    .sidebar .logo {
-      display: flex; align-items: center; gap: 12px;
-      margin-bottom: 32px; font-weight: 700; font-size: 0.95rem;
-    }
-
-    .sidebar .logo i {
-      background: #37d08f; color: #0f172a;
-      padding: 10px; border-radius: 12px;
-      font-size: 1.1rem; flex-shrink: 0;
-    }
-
-    .sidebar .menu a {
-      display: flex; align-items: center; gap: 12px;
-      color: #d6d8ef; padding: 11px 14px;
-      border-radius: 12px; text-decoration: none;
-      margin-bottom: 6px; font-size: 0.9rem;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .sidebar .menu a:hover { background: rgba(255,255,255,0.07); color: #fff; }
-
-    .sidebar .menu a.active {
-      background: rgba(255,255,255,0.07); color: #fff;
-      border-left: 3px solid #37d08f; padding-left: 11px;
-    }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 16px; display: flex; align-items: center; gap: 12px;
-    }
-
-    .user-info { font-size: 12px; line-height: 1.5; }
-
-    /* ── MAIN ────────────────────────────────────────────────── */
-    .main { margin-left: 240px; padding: 32px 32px 48px; }
-
-    /* ── PANEL ───────────────────────────────────────────────── */
-    .panel {
-      background: #fff; border-radius: 20px;
-      padding: 24px 28px; box-shadow: 0 4px 24px rgba(15,23,42,0.07);
-      margin-bottom: 24px;
-    }
-
-    .panel-header {
-      display: flex; align-items: center; gap: 10px;
-      margin-bottom: 20px; padding-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .icon-badge {
-      width: 36px; height: 36px; border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.9rem; flex-shrink: 0;
-    }
-
-    .panel-header h5 { margin: 0; font-size: 1rem; font-weight: 700; }
-    .panel-header p  { margin: 0; font-size: 0.8rem; color: #6b7280; }
-
-    /* ── PAGE HEADING ────────────────────────────────────────── */
-    .page-heading {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
-    }
-
-    .page-heading h2 { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; }
-    .page-heading p  { margin: 0; color: #6b7280; font-size: 0.9rem; }
-
-    /* Back link */
-    .back-link {
-      display: inline-flex; align-items: center; gap: 7px;
-      color: #1f2558; font-weight: 600; font-size: 0.87rem;
-      text-decoration: none;
-      padding: 8px 16px; border-radius: 10px;
-      background: #f1f5f9; border: 1px solid #e2e8f0;
-      transition: background 0.15s;
-    }
-
-    .back-link:hover { background: #e2e8f0; color: #1f2558; }
-
-    /* Action buttons */
-    .btn-act {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 18px; border-radius: 10px;
-      font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; border: none;
-      transition: opacity 0.15s; text-decoration: none;
-    }
-
-    .btn-act:hover { opacity: 0.85; }
-    .btn-act.primary { background: #1f2558; color: #fff; }
-    .btn-act.green   { background: #37d08f; color: #0f172a; }
-
-    /* ── DETAIL GRID ─────────────────────────────────────────── */
-    .detail-grid {
-      display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 24px; align-items: start;
-    }
-
-    /* Image panel */
-    .img-panel {
-      background: #0f172a; border-radius: 14px;
-      overflow: hidden; display: flex;
-      align-items: center; justify-content: center;
-      min-height: 320px;
-    }
-
-    .img-panel img {
-      width: 100%; object-fit: contain; max-height: 420px;
-    }
-
-    .img-placeholder {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      min-height: 320px; color: #475569;
-      font-size: 0.88rem; gap: 12px;
-    }
-
-    .img-placeholder i { font-size: 3rem; color: #334155; }
-
-    /* Info rows */
-    .info-list { display: flex; flex-direction: column; gap: 0; }
-
-    .info-row {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 13px 0; border-bottom: 1px solid #f8fafc;
-      gap: 16px;
-    }
-
-    .info-row:last-child { border-bottom: none; }
-
-    .info-key {
-      font-size: 0.8rem; font-weight: 700; color: #6b7280;
-      text-transform: uppercase; letter-spacing: 0.04em;
-      white-space: nowrap; flex-shrink: 0;
-    }
-
-    .info-val {
-      font-size: 0.88rem; font-weight: 600; color: #1e293b;
-      text-align: right; word-break: break-all;
-    }
-
-    /* ID badge */
-    .id-badge {
-      display: inline-block; padding: 3px 10px;
-      background: #f1f5f9; border-radius: 6px;
-      font-size: 0.82rem; font-weight: 700; color: #1e293b;
-      font-family: monospace;
-    }
-
-    /* Defect badges — konsisten dengan semua halaman */
-    .defect-badge {
-      display: inline-block; padding: 4px 10px;
-      border-radius: 999px; font-size: 0.78rem;
-      font-weight: 700; white-space: nowrap;
-    }
-
-    .defect-spurious-copper { background: rgba(239,68,68,0.12);  color: #991b1b; }
-    .defect-mouse-bite      { background: rgba(59,130,246,0.12);  color: #1e40af; }
-    .defect-spur            { background: rgba(249,115,22,0.12);  color: #92400e; }
-    .defect-missing-resistor { background: rgba(168,85,247,0.12); color: #6b21a8; }
-    .defect-missing-buzzer   { background: rgba(234,179,8,0.15);  color: #854d0e; }
-    .defect-short           { background: rgba(139,92,246,0.12);  color: #5b21b6; }
-    .defect-missing-hole    { background: rgba(34,197,94,0.12);   color: #14532d; }
-    .defect-open-circuit    { background: rgba(14,165,233,0.12);  color: #0c4a6e; }
-    .defect-no-defect       { background: rgba(16,185,129,0.12);  color: #065f46; }
-
-    /* Status pill */
-    .status-pill {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 5px 12px; border-radius: 999px;
-      font-size: 0.78rem; font-weight: 700;
-    }
-
-    .status-pill.defect { background: rgba(239,68,68,0.1);  color: #b91c1c; }
-    .status-pill.normal { background: rgba(16,185,129,0.1); color: #065f46; }
-
-    /* Accuracy bar */
-    .acc-group { width: 100%; }
-    .acc-top   { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-    .acc-num   { font-size: 0.85rem; font-weight: 700; color: #1e293b; }
-    .acc-track {
-      height: 8px; border-radius: 999px;
-      background: #e5e7eb; overflow: hidden;
-    }
-    .acc-fill  {
-      height: 100%; border-radius: 999px;
-      background: linear-gradient(90deg, #37d08f, #1f2558);
-      transition: width 0.8s ease;
-    }
-
-    /* ── RESPONSIVE ──────────────────────────────────────────── */
-    @media (max-width: 1100px) {
-      .detail-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (max-width: 767px) {
-      .sidebar { display: none; }
-      .main    { margin-left: 0; padding: 20px 16px 40px; }
-    }
-  </style>
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workflow.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+{% include 'shared/i18n.html' %}
 </head>
-<body>
+<body class="view-technician-detail">
 
-<!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
-<div class="sidebar">
-  <div>
-    <div class="logo">
-      <i class="fas fa-microchip"></i>
-      <span>PCB Defect<br>Detection</span>
-    </div>
-    <div class="menu">
-      <a href="{{ url_for('technician_dashboard') }}">
-        <i class="fas fa-home"></i> Dashboard
-      </a>
-      <a href="{{ url_for('technician_detection') }}">
-        <i class="fas fa-camera"></i> Detection
-      </a>
-      <a href="{{ url_for('technician_history') }}" class="active">
-        <i class="fas fa-clock"></i> History
-      </a>
-      <a href="{{ url_for('technician_report') }}">
-        <i class="fas fa-file-alt"></i> Report
-      </a>
-    </div>
-  </div>
+{% include 'shared/sidebar.html' %}
 
-  <!-- FIX: tambah dropdown settings/logout — sebelumnya hanya ikon statis -->
-  <div class="sidebar-footer">
-    <div class="dropdown">
-      <a href="#" data-bs-toggle="dropdown">
-        <i class="fas fa-user-circle fa-2x" style="color:white"></i>
-      </a>
-      <ul class="dropdown-menu">
-        <li>
-          <a class="dropdown-item" href="{{ url_for('technician_settings') }}">
-            Settings
-          </a>
-        </li>
-        <li>
-          <a class="dropdown-item" href="/logout">Logout</a>
-        </li>
-      </ul>
-    </div>
-    <div class="user-info">
-      <div style="font-weight:600">{{ username or 'User' }}</div>
-      <div style="color:#94a3b8">{{ role or 'Technician' }}</div>
-    </div>
-  </div>
-</div>
-
-<!-- ── MAIN ─────────────────────────────────────────────────────── -->
-<main class="main">
+<main class="main workflow-main">
+  {% include 'shared/workspace_context.html' %}
 
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for category, message in messages %}
     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      {{ _(message) }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="{{ _("Close") }}"></button>
     </div>
     {% endfor %}
   {% endwith %}
 
-  <!-- Page heading + navigation actions -->
   <div class="page-heading">
     <div>
-      <h2>Detection Detail</h2>
-      <p>Full result for detection record #{{ detection.id }}</p>
+      <h2>{{ _("Inspection details") }}</h2>
+      <p>{{ _("Full result for detection record #") }}{{ _(detection.id) }}</p>
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <a href="{{ url_for('technician_history') }}" class="back-link">
-        <i class="fas fa-arrow-left"></i> Back to History
+        <i class="fas fa-arrow-left"></i> {{ _("Back to History") }}
       </a>
-      <!-- FIX: tambah CTA "Detect Again" — tidak ada di template lama -->
+
       <a href="{{ url_for('technician_detection') }}" class="btn-act primary">
-        <i class="fas fa-camera"></i> Detect Again
+        <i class="fas fa-camera"></i> {{ _("Detect Again") }}
       </a>
     </div>
   </div>
 
-  <div class="panel">
-    <div class="panel-header">
-      <div class="icon-badge" style="background:#eff6ff;color:#1d4ed8">
-        <i class="fas fa-tasks"></i>
-      </div>
-      <div>
-        <h5>Status Tindak Lanjut</h5>
-        <p>Status ini diperbarui oleh teknisi dan terpisah dari hasil deteksi AI.</p>
-      </div>
-    </div>
-
-    <form method="POST"
-          action="{{ url_for('update_follow_up_status', detection_id=detection.id) }}"
-          class="row g-3 align-items-end">
-      <div class="col-md-8">
-        <label for="followUpStatus" class="form-label fw-semibold">Pilih status</label>
-        <select class="form-select" id="followUpStatus" name="follow_up_status" required>
-          {% for follow_up_status in follow_up_statuses %}
-          <option value="{{ follow_up_status }}"
-                  {% if detection.follow_up_status == follow_up_status %}selected{% endif %}>
-            {{ follow_up_status }}
-          </option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-4">
-        <button type="submit" class="btn btn-primary rounded-pill px-4">
-          <i class="fas fa-save me-2"></i>Simpan Status
-        </button>
-      </div>
-    </form>
-  </div>
-
-  <!-- ══ MAIN DETAIL PANEL ═════════════════════════════════════ -->
   <div class="panel">
     <div class="panel-header">
       <div class="icon-badge"
@@ -356,110 +54,94 @@
         <i class="fas fa-{{ 'exclamation-triangle' if detection.status == 'DEFECT' else 'check-circle' }}"></i>
       </div>
       <div>
-        <h5>Detection Result</h5>
+        <h5>{{ _("Detection Result") }}</h5>
         <p>
-          Recorded on
-          {{ detection.created_at.strftime('%d %B %Y') if detection.created_at else '—' }}
+          {{ _("Recorded on") }}
+          {{ _(detection.created_at.strftime('%d %B %Y') if detection.created_at else '—') }}
         </p>
       </div>
     </div>
 
     <div class="detail-grid">
 
-      <!-- Left: annotated result image -->
       <div>
-        {# FIX: fallback jika image_url kosong — sebelumnya broken icon #}
+
         {% if detection.image_url %}
         <div class="img-panel">
-          <img src="{{ detection.image_url }}" alt="{{ detection.defect_type }}" />
+          <img src="{{ detection.image_url }}" alt="{{ _(detection.defect_type) }}" />
         </div>
         {% else %}
         <div class="img-panel">
           <div class="img-placeholder">
             <i class="fas fa-image"></i>
-            <span>Image not available</span>
+            <span>{{ _("Image not available") }}</span>
           </div>
         </div>
         {% endif %}
       </div>
 
-      <!-- Right: info panel -->
       <div class="info-list">
 
-        <!-- FIX: tampilkan ID record — tidak ada di template lama -->
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-hashtag me-1"></i>Record ID</span>
+          <span class="info-key"><i class="fas fa-hashtag me-1"></i>{{ _("Record ID") }}</span>
           <span class="info-val">
-            <span class="id-badge">#{{ detection.id }}</span>
+            <span class="id-badge">#{{ _(detection.id) }}</span>
           </span>
         </div>
 
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-microchip me-1"></i>PCB ID</span>
+          <span class="info-key"><i class="fas fa-microchip me-1"></i>{{ _("PCB ID") }}</span>
           <span class="info-val">
-            <span class="id-badge">{{ detection.pcb_id or '—' }}</span>
+            <span class="id-badge">{{ detection.pcb_id or _('—') }}</span>
           </span>
         </div>
 
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-file me-1"></i>File Name</span>
+          <span class="info-key"><i class="fas fa-file me-1"></i>{{ _("File Name") }}</span>
           <span class="info-val"
                 style="font-size:0.78rem;color:#6b7280;word-break:break-all"
-                title="{{ detection.file_name or '-' }}">
-            {{ detection.file_name or 'N/A' }}
+                title="{{ detection.file_name or _('-') }}">
+            {{ detection.file_name or _('N/A') }}
           </span>
         </div>
 
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-bug me-1"></i>Defect Type</span>
+          <span class="info-key"><i class="fas fa-bug me-1"></i>{{ _("Defect Type") }}</span>
           <span class="info-val">
-            {# FIX: pakai defect-badge class — sebelumnya plain text #}
+
             <span class="defect-badge
               defect-{{ (detection.defect_type or 'no-defect') | replace('_','-') }}">
-              {{ detection.defect_type or 'No Defect' }}
+              {{ _(detection.defect_type or 'No Defect') }}
             </span>
           </span>
         </div>
 
-        <div class="info-row" style="flex-direction:column;align-items:flex-start;gap:8px">
-          <span class="info-key"><i class="fas fa-shield-alt me-1"></i>Model Confidence</span>
-          {# FIX: tambah visual bar — sebelumnya hanya angka teks #}
-          <div class="acc-group">
-            <div class="acc-top">
-              <span class="acc-num">{{ detection.accuracy or 0 }}%</span>
-            </div>
-            <div class="acc-track">
-              <div class="acc-fill" style="width:{{ detection.accuracy or 0 }}%"></div>
-            </div>
-          </div>
-        </div>
-
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-tag me-1"></i>Status</span>
+          <span class="info-key"><i class="fas fa-tag me-1"></i>{{ _("Status") }}</span>
           <span class="info-val">
-            {# FIX: pakai status-pill badge — sebelumnya plain text "DEFECT" #}
+
             <span class="status-pill
               {{ 'defect' if detection.status == 'DEFECT' else 'normal' }}">
               <i class="fas fa-{{ 'exclamation-circle'
                  if detection.status == 'DEFECT' else 'check-circle' }}"></i>
-              {{ detection.status or 'NORMAL' }}
+              {{ _(detection.status or 'NORMAL') }}
             </span>
           </span>
         </div>
 
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-tasks me-1"></i>Status Tindak Lanjut</span>
-          <span class="info-val">{{ detection.follow_up_status or 'Belum ditinjau' }}</span>
+          <span class="info-key"><i class="fas fa-tasks me-1"></i>{{ _("Status Tindak Lanjut") }}</span>
+          <span class="info-val">{{ _(detection.follow_up_status or 'Belum ditinjau') }}</span>
         </div>
 
         <div class="info-row">
-          <span class="info-key"><i class="fas fa-calendar me-1"></i>Date</span>
+          <span class="info-key"><i class="fas fa-calendar me-1"></i>{{ _("Date") }}</span>
           <span class="info-val">
-            {# FIX: None-guard agar tidak crash jika created_at NULL #}
+
             {% if detection.created_at %}
-              {{ detection.created_at.strftime('%d %B %Y') }}<br>
+              {{ _(detection.created_at.strftime('%d %B %Y')) }}<br>
               <span style="color:#94a3b8;font-size:0.78rem">
-                {{ detection.created_at.strftime('%H:%M:%S') }}
+                {{ _(detection.created_at.strftime('%H:%M:%S')) }}
               </span>
             {% else %}
               —
@@ -467,22 +149,51 @@
           </span>
         </div>
 
-      </div><!-- /info-list -->
-    </div><!-- /detail-grid -->
+      </div>
+    </div>
   </div>
 
-  <!-- ══ NAVIGATION FOOTER ════════════════════════════════════ -->
   <div style="display:flex;gap:12px;flex-wrap:wrap">
     <a href="{{ url_for('technician_history') }}" class="back-link">
-      <i class="fas fa-arrow-left"></i> Back to History
+      <i class="fas fa-arrow-left"></i> {{ _("Back to History") }}
     </a>
     <a href="{{ url_for('technician_report') }}" class="btn-act green">
-      <i class="fas fa-file-alt"></i> View Report
+      <i class="fas fa-file-alt"></i> {{ _("View Report") }}
     </a>
     <a href="{{ url_for('technician_detection') }}" class="btn-act primary">
-      <i class="fas fa-camera"></i> Detect Again
+      <i class="fas fa-camera"></i> {{ _("Detect Again") }}
     </a>
   </div>
+
+<section class="wf-panel"><h2>{{ _("Pengelompokan") }} & {{ _("tindak lanjut") }}</h2>
+<form method="post" action="{{ url_for('workflow.detail', unit_id=unit.id) }}"><input type="hidden" name="csrf_token" value="{{ workflow_csrf }}"><div class="wf-grid">
+  {% if role == 'admin' %}
+  <label>{{ _("Jenis PCB") }}<select name="pcb_type_id"><option value="">{{ _("Belum ditentukan") }}</option>{% for type in types %}<option value="{{ type.id }}" {{ 'selected' if unit.pcb_type_id == type.id }}>{{ type.name }}</option>{% endfor %}</select></label>
+  <label>{{ _("Prioritas") }}<select name="priority">{% for priority in priorities %}<option value="{{ priority }}" {{ 'selected' if unit.priority == priority }}>{{ _(priority) }}</option>{% endfor %}</select></label>
+  {% else %}
+  <div><p>{{ _("Jenis:") }} <strong>{% for type in types if type.id == unit.pcb_type_id %}{{ type.name }}{% else %}{{ _("Belum ditentukan") }}{% endfor %}</strong></p><p>{{ _("Prioritas:") }} {{ _(unit.priority) }}</p></div>
+  {% endif %}
+  <label>{{ _("Status pengerjaan") }}<select name="status">{% for status in work_statuses %}<option value="{{ status }}" {{ 'selected' if unit.work_status == status }}>{{ _(status) }}</option>{% endfor %}</select></label>
+</div><label style="margin-top:16px">{{ _("Catatan tindakan / alasan inspeksi ulang") }}<textarea name="notes" maxlength="2000">{{ unit.notes or _('') }}</textarea></label><div class="wf-actions"><button>{{ _("Simpan pembaruan inspeksi") }}</button>{% if role == 'technician' %}<a href="{{ url_for('technician_detection', pcb_id=unit.pcb_id or '') }}">{{ _("Lakukan inspeksi ulang →") }}</a>{% endif %}</div></form>
+<p class="wf-muted">{{ _("Untuk status Selesai, hasil inspeksi terbaru harus sudah diverifikasi teknisi. Inspeksi baru setelah Selesai atau Perlu Inspeksi Ulang akan membuka kembali status Dikerjakan.") }}</p>
+</section>
+<h2 style="margin-top:32px">{{ _("Riwayat inspeksi") }} & {{ _("verifikasi") }}</h2>
+{% for inspection in inspections %}
+<section class="wf-panel" id="inspection-{{ inspection.id }}"><h2>{{ _("Inspeksi #") }}{{ _(inspection.id) }} {{ _('· Terbaru' if loop.first) }}</h2><p class="wf-muted">{{ _(inspection.created_at) }} {{ _("· AI:") }} {{ _(inspection.status) }} / {{ _(inspection.defect_type) }}</p>
+<div class="wf-images">{% for path, caption in [(inspection.source_image_path,'Gambar asli'),(inspection.image_path,'Hasil deteksi AI')] %}{% if path and path.startswith('/images/') %}<figure><img src="{{ path }}" alt="{{ _(caption) }} {{ _("inspeksi") }} {{ _(inspection.id) }}" loading="lazy"><figcaption>{{ _(caption) }}</figcaption></figure>{% endif %}{% endfor %}</div>
+<p>{{ _("Verifikasi:") }} <strong>{{ _(inspection.verification or 'Belum diverifikasi') }}</strong>{% if inspection.corrected_defect %} {{ _("· Hasil koreksi:") }} <strong>{{ _(inspection.corrected_defect) }}</strong>{% endif %}</p>
+{% if inspection.reviewer_name %}<p class="wf-muted">{{ _("Oleh") }} {{ inspection.reviewer_name }} · {{ _(inspection.reviewed_at) }}</p>{% endif %}
+{% if inspection.reason %}<p>{{ _("Catatan teknisi:") }} {{ inspection.reason }}</p>{% endif %}
+{% if role == 'technician' %}
+<details><summary>{{ _('Ubah verifikasi' if inspection.verification else 'Verifikasi hasil AI') }}</summary>
+<form method="post" action="{{ url_for('workflow.review', detection_id=inspection.id) }}" style="margin-top:16px"><input type="hidden" name="csrf_token" value="{{ workflow_csrf }}"><div class="wf-grid">
+<label>{{ _("Keputusan") }}<select name="verification"><option value="Dikonfirmasi" {{ 'selected' if inspection.verification == 'Dikonfirmasi' }}>{{ _("Dikonfirmasi") }}</option><option value="Dikoreksi" {{ 'selected' if inspection.verification == 'Dikoreksi' }}>{{ _("Dikoreksi") }}</option></select></label>
+<label>{{ _("Jenis cacat utama yang benar (untuk koreksi)") }}<select name="corrected_defect"><option value="">{{ _("Pilih jika mengoreksi") }}</option>{% for defect in defect_options %}<option value="{{ defect }}" {{ 'selected' if inspection.corrected_defect == defect }}>{{ _(defect) }}</option>{% endfor %}</select></label></div>
+<label style="margin-top:16px">{{ _("Alasan / catatan (wajib untuk koreksi)") }}<textarea name="reason" maxlength="2000">{{ inspection.reason or _('') }}</textarea></label><div class="wf-actions"><button>{{ _("Simpan verifikasi") }}</button></div></form></details>
+{% endif %}
+</section>{% else %}<p>{{ _("Belum ada inspeksi.") }}</p>{% endfor %}
+<section class="wf-panel"><h2>{{ _("Jejak perubahan") }}</h2><p class="wf-muted">{{ _("Menampilkan pelaku, waktu, serta nilai sebelum dan sesudah perubahan. Prediksi AI asli tidak diganti oleh verifikasi.") }}</p>
+{% for event in events %}<article class="wf-event"><strong>{{ _(event.event_type) }}</strong> · {{ event.actor_name }} · {{ _(event.created_at) }}{% if event.detection_id %} {{ _("· inspeksi #") }}{{ _(event.detection_id) }}{% endif %}<div class="wf-scroll"><table><thead><tr><th>{{ _("Perubahan") }}</th><th>{{ _("Sebelum") }}</th><th>{{ _("Sesudah") }}</th></tr></thead><tbody>{% for change in event.changes %}<tr><td>{{ _(change.label) }}</td><td>{{ _(change.before) }}</td><td>{{ _(change.after) }}</td></tr>{% else %}<tr><td colspan="3">{{ _("Verifikasi disimpan kembali tanpa perubahan isi.") }}</td></tr>{% endfor %}</tbody></table></div></article>{% else %}<p>{{ _("Belum ada perubahan yang dicatat.") }}</p>{% endfor %}</section>
 
 </main>
 

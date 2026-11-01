@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="{{ language }}"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ _("Manajemen Inspeksi PCB — PCB Inspect") }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workflow.css') }}">
+  <script src="{{ url_for('static', filename='workspace.js') }}" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" defer></script>
+{% include 'shared/i18n.html' %}
+</head><body>
+{% include 'shared/sidebar.html' %}
+
+<main class="main workflow-main">
+  {% include 'shared/workspace_context.html' %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}<p role="alert" class="notice {{ category }}">{{ _(message) }}</p>{% endfor %}
+
+<h1>{{ _('Manajemen Inspeksi PCB' if role == 'admin' else 'PCB & Manajemen Inspeksi Saya') }}</h1>
+<p class="wf-muted">{{ _("Telusuri PCB ID, pantau pekerjaan, dan lihat verifikasi teknisi. Satu baris adalah satu PCB milik satu teknisi; inspeksi ulang tetap terhubung.") }}</p>
+<div class="wf-metrics">{% for status, count in counts.items() %}<div class="wf-metric">{{ _(status) }}<strong>{{ _(count) }}</strong></div>{% endfor %}</div>
+<section class="wf-panel"><h2>{{ _("Filter unit PCB") }}</h2>
+  <form method="get"><div class="wf-grid">
+    <label>{{ _("Cari PCB ID atau jenis") }}<input name="q" maxlength="100" value="{{ filters.q }}" placeholder="{{ _("Contoh: PCB-001") }}"></label>
+    <label>{{ _("Jenis PCB") }}<select name="pcb_type"><option value="">{{ _("Semua jenis") }}</option>{% for type in types %}<option value="{{ type.id }}" {{ 'selected' if filters.pcb_type == type.id|string }}>{{ type.name }}</option>{% endfor %}</select></label>
+    <label>{{ _("Status pengerjaan") }}<select name="status"><option value="">{{ _("Semua status") }}</option>{% for status in work_statuses %}<option value="{{ status }}" {{ 'selected' if filters.status == status }}>{{ _(status) }}</option>{% endfor %}</select></label>
+    <label>{{ _("Verifikasi inspeksi terbaru") }}<select name="verification"><option value="">{{ _("Semua verifikasi") }}</option>{% for state in review_states %}<option value="{{ state }}" {{ 'selected' if filters.verification == state }}>{{ _(state) }}</option>{% endfor %}</select></label>
+  </div><div class="wf-actions"><button>{{ _("Terapkan filter") }}</button><a href="{{ url_for('workflow.overview') }}">{{ _("Reset") }}</a><button name="export" value="csv">{{ _("Unduh CSV sesuai filter") }}</button></div></form>
+  <p class="wf-muted">{{ _("Ringkasan status mengikuti filter. Verifikasi di daftar ini hanya untuk inspeksi terbaru setiap PCB.") }}</p>
+</section>
+<section class="wf-panel"><h2>{{ _("Unit PCB ·") }} {{ _(rows|length) }} {{ _("unit") }}</h2><div class="wf-scroll"><table>
+  <thead><tr><th>{{ _("PCB / Teknisi") }}</th><th>{{ _("Jenis PCB") }}</th><th>{{ _("Pengerjaan") }}</th><th>{{ _("Hasil AI terbaru") }}</th><th>{{ _("Verifikasi teknisi") }}</th><th>{{ _("Aksi") }}</th></tr></thead>
+  <tbody>{% for row in rows %}<tr>
+    <td><strong>{{ row.pcb_id or _('Tanpa PCB ID') }}</strong><br><span class="wf-muted">{{ row.technician_name or _('Teknisi tidak tersedia') }}</span></td>
+    <td><span class="wf-muted">{{ row.type_name or _('Jenis belum ditentukan') }}</span></td>
+    <td><span class="wf-pill">{{ _(row.work_status) }}</span><br><span class="{{ 'wf-priority' if row.priority == 'Tinggi' else 'wf-muted' }}">{{ _("Prioritas") }} {{ _(row.priority) }}</span></td>
+    <td>{{ _(row.defect_type) }}<br><span class="wf-muted">#{{ _(row.detection_id) }} · {{ _(row.inspected_at) }}</span></td>
+    <td>{{ _(row.verification) }}{% if row.corrected_defect %}<br><strong>→ {{ _(row.corrected_defect) }}</strong>{% endif %}</td>
+    <td><a href="{{ url_for('workflow.detail', unit_id=row.id) }}">{{ _("Buka detail →") }}</a></td>
+  </tr>{% else %}<tr><td colspan="6">{{ _("Belum ada unit sesuai filter. Unit otomatis muncul setelah teknisi menyimpan inspeksi. Data inspeksi lama juga ikut ditampilkan.") }}</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% if role == 'admin' %}
+<section class="wf-panel"><h2>{{ _("Kelola jenis PCB") }}</h2><p class="wf-muted">{{ _("Identitas unit memakai PCB ID dari teknisi. Jenis PCB dapat ditentukan admin melalui detail unit.") }}</p><div class="wf-split">
+{% for kind, title, placeholder in [('type','Tambah jenis PCB','PCB Sensor Suhu')] %}
+<form method="post" action="{{ url_for('workflow.catalog') }}"><input type="hidden" name="csrf_token" value="{{ workflow_csrf }}"><input type="hidden" name="kind" value="{{ kind }}"><h3>{{ _(title) }}</h3><label>{{ _("Nama jenis") }}<input name="name" maxlength="100" placeholder="{{ _(placeholder) }}" required></label><label>{{ _("Deskripsi") }}<input name="description" maxlength="500"></label><div class="wf-actions"><button>{{ _("Simpan") }}</button></div></form>
+{% endfor %}</div>
+<details style="margin-top:24px"><summary>{{ _("Daftar jenis PCB") }}</summary>{% for type in types %}<p><strong>{{ type.name }}</strong> — {{ type.description }}</p>{% else %}<p>{{ _("Belum ada jenis PCB.") }}</p>{% endfor %}</details>
+</section>
+{% endif %}
+<p class="wf-muted">{{ _("Selesai berarti tindak lanjut selesai, bukan jaminan PCB bebas cacat. Hasil AI dan koreksi manusia dicatat terpisah.") }}</p>
+
+</main></body></html>

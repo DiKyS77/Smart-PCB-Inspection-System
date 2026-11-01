@@ -42,7 +42,7 @@ def test_admin_dashboard(admin_client, monkeypatch):
                 "id": 1,
                 "image_path": "/static/results/test.jpg",
                 "defect_type": "short",
-                "accuracy": 98,
+
                 "status": "DEFECT",
                 "created_at": datetime(2026, 1, 1, 10, 30),
                 "username": "technician"

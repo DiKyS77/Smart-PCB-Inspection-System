@@ -1,0 +1,6 @@
+{% set history_search = request.endpoint == 'technician_history' %}
+<div class="pag-row" data-record-pagination data-rows="{{ '#tableBody tr[data-defect]' if history_search else '#tableBody tr:not(.empty-row)' }}"{% if history_search %} data-search="#searchInput"{% endif %}>
+  <span id="pagInfo" data-page-info aria-live="polite"></span>
+  <nav class="pag-btns" id="pagBtns" data-page-buttons aria-label="{{ _('Pagination') }}"></nav>
+</div>
+<script src="{{ url_for('static', filename='pagination.js') }}" defer></script>

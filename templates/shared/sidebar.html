@@ -1,0 +1,24 @@
+{% set is_admin = session.get('role') == 'admin' %}
+{% set endpoint = request.endpoint or '' %}
+{% set entries = [('admin_dashboard', 'Dashboard', 'chart-line'), ('admin_manage_user', 'Technicians', 'users'), ('admin_report', 'Report', 'file-alt'), ('workflow.overview', 'PCB Inspection Management', 'tasks')] if is_admin else [('technician_dashboard', 'Dashboard', 'home'), ('technician_detection', 'Detection', 'camera'), ('technician_history', 'History', 'clock'), ('technician_report', 'Report', 'file-alt')] %}
+<aside id="sidebar" class="sidebar" aria-label="{{ _('Main navigation') }}">
+  <div>
+    <div class="logo"><i class="fas fa-microchip" aria-hidden="true"></i><span>PCB Inspect<span class="brand-caption">{{ _('Administration' if is_admin else 'Technician workspace') }}</span></span></div>
+    <nav class="menu">
+      {% for target, label, icon in entries %}
+      {% set active = endpoint == target or (endpoint.startswith('workflow.') and target == ('workflow.overview' if is_admin else 'technician_history')) or (endpoint == 'technician_history_detail' and target == 'technician_history') %}
+      <a href="{{ url_for(target) }}"{% if active %} class="active" aria-current="page"{% endif %}><i class="fas fa-{{ icon }}" aria-hidden="true"></i><span>{{ _(label) }}</span></a>
+      {% endfor %}
+    </nav>
+  </div>
+  <div class="sidebar-footer">
+    <div class="dropdown">
+      <button class="account-menu" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{{ _('Account menu') }}"><i class="fas fa-user-circle" aria-hidden="true"></i></button>
+      <ul class="dropdown-menu">
+        {% if not is_admin %}<li><a class="dropdown-item" href="{{ url_for('technician_settings') }}">{{ _('Settings') }}</a></li>{% endif %}
+        <li><a class="dropdown-item" href="{{ url_for('logout') }}">{{ _('Logout') }}</a></li>
+      </ul>
+    </div>
+    <div class="user-info"><div>{{ session.get('username') or _('User') }}</div><div>{{ _('Administrator' if is_admin else 'Technician') }}</div></div>
+  </div>
+</aside>

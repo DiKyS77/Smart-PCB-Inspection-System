@@ -6,7 +6,7 @@ def test_dashboard(technician_client, monkeypatch):
     fake_cursor = MagicMock()
 
     fake_cursor.fetchone.side_effect = [
-        {"total":5,"avg_acc":95}
+        {"total":5}
     ]
 
     fake_cursor.fetchall.side_effect = [
@@ -19,7 +19,7 @@ def test_dashboard(technician_client, monkeypatch):
                 "id":1,
                 "image_path":"/static/results/test.jpg",
                 "defect_type":"short",
-                "accuracy":98,
+
                 "status":"DEFECT",
                 "created_at": datetime(2026, 1, 1, 10, 30)
             }

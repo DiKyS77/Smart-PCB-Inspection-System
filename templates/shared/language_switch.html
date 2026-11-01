@@ -1,0 +1,9 @@
+<form class="language-switch" action="{{ url_for('set_language') }}" method="post">
+  <input type="hidden" name="next" value="{{ language_next }}">
+  <label for="page-language">{{ _('Language') }}</label>
+  <select id="page-language" name="language" onchange="this.form.requestSubmit()">
+    <option value="id"{% if language == 'id' %} selected{% endif %}>Indonesia</option>
+    <option value="en"{% if language == 'en' %} selected{% endif %}>English</option>
+  </select>
+  <button type="submit" aria-label="{{ _('Change language') }}">↵</button>
+</form>

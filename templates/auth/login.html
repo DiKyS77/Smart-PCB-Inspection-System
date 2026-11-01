@@ -1,133 +1,58 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Login</title>
-
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-    <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-
-    <style>
-      body {
-        height: 100vh;
-        margin: 0;
-        background: url('https://www.transparenttextures.com/patterns/circuit-board.png'), linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-        background-size: cover;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        font-family: 'Segoe UI', sans-serif;
-      }
-      
-      .login-card {
-        width: 350px;
-        padding: 30px;
-        border-radius: 20px;
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(15px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        color: white;
-      }
-      
-      .login-card h3 {
-        text-align: center;
-        margin-bottom: 25px;
-        font-weight: bold;
-      }
-      
-      .input-group {
-        background: rgba(255, 255, 255, 0.15);
-        border-radius: 15px;
-        margin-bottom: 15px;
-        overflow: hidden;
-      }
-      
-      .input-group-text {
-        background: transparent;
-        border: none;
-        color: white;
-      }
-      
-      .form-control {
-        background: transparent;
-        border: none;
-        color: white;
-      }
-      
-      .form-control:focus {
-        box-shadow: none;
-        background: transparent;
-        color: white;
-      }
-      
-      .form-control::placeholder {
-        color: #ddd;
-      }
-      
-      .btn-login {
-        width: 100%;
-        border-radius: 20px;
-        padding: 10px;
-        background: linear-gradient(90deg, #56ccf2, #2f80ed);
-        border: none;
-        color: white;
-        font-weight: bold;
-        margin-top: 10px;
-      }
-      
-      .btn-login:hover {
-        opacity: 0.9;
-      }
-      
-      .eye-icon {
-        cursor: pointer;
-        color: white;
-      }
-    </style>
-  </head>
-
-  <body>
-    <div class="login-card">
-      <h3>Login</h3>
-
+<html lang="{{ language }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ _("Sign in — PCB Inspect") }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='workspace.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='components.css') }}">
+{% include 'shared/i18n.html' %}
+</head>
+<body class="login-page view-auth-login">
+  <header class="public-language">{% include 'shared/language_switch.html' %}</header>
+  <main class="login-layout">
+    <aside class="login-aside">
+      <a href="/">PCB Inspect <span aria-hidden="true">↗</span></a>
+      <div>
+        <h2>{{ _("Your inspection") }}<br>{{ _("workspace.") }}</h2>
+        <p>{{ _("Review boards, record defects, and keep track of the work that follows.") }}</p>
+      </div>
+      <small>{{ _("SMART PCB INSPECTION SYSTEM") }}</small>
+    </aside>
+    <section class="login-card" aria-labelledby="login-heading">
+      <h3 id="login-heading">{{ _("Welcome back.") }}</h3>
+      <p class="login-intro">{{ _("Sign in to continue your work.") }}</p>
       {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
+      <div class="alert alert-danger" role="alert">{{ _(error) }}</div>
       {% endif %}
-
       <form method="POST">
-        <!-- Identifier -->
+        <label for="identifier" class="form-label">{{ _("ID or username") }}</label>
         <div class="input-group">
-          <span class="input-group-text"><i class="fa fa-user"></i></span>
-          <input type="text" name="identifier" class="form-control" placeholder="ID / Username" required />
+          <span class="input-group-text"><i class="fa fa-user" aria-hidden="true"></i></span>
+          <input type="text" id="identifier" name="identifier" class="form-control" placeholder="{{ _("Enter your ID or username") }}" autocomplete="username" required>
         </div>
-
-        <!-- Password -->
+        <label for="password" class="form-label">{{ _("Password") }}</label>
         <div class="input-group">
-          <span class="input-group-text"><i class="fa fa-lock"></i></span>
-          <input type="password" id="password" name="password" class="form-control" placeholder="Password" required />
-
-          <span class="input-group-text"><i class="fa fa-eye eye-icon" id="togglePassword"></i></span>
+          <span class="input-group-text"><i class="fa fa-lock" aria-hidden="true"></i></span>
+          <input type="password" id="password" name="password" class="form-control" placeholder="{{ _("Enter your password") }}" autocomplete="current-password" required>
+          <button type="button" class="input-group-text" id="togglePassword" aria-label="{{ _("Show password") }}" aria-pressed="false"><i class="fa fa-eye" aria-hidden="true"></i></button>
         </div>
-
-        <!-- Submit -->
-        <button type="submit" class="btn btn-login">Log In</button>
+        <button type="submit" class="btn btn-login">{{ _("Sign in") }} <span aria-hidden="true">→</span></button>
       </form>
-    </div>
-
-    <!-- Script Show/Hide Password -->
-    <script>
-      const togglePassword = document.querySelector('#togglePassword')
-      const password = document.querySelector('#password')
-      
-      togglePassword.addEventListener('click', function () {
-        const type = password.getAttribute('type') === 'password' ? 'text' : 'password'
-        password.setAttribute('type', type)
-      
-        this.classList.toggle('fa-eye')
-        this.classList.toggle('fa-eye-slash')
-      })
-    </script>
-  </body>
+      <p class="login-note">{{ _("Use the account provided by your administrator.") }}</p>
+    </section>
+  </main>
+  <script>
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const input = document.getElementById('password');
+      const visible = input.type === 'password';
+      input.type = visible ? 'text' : 'password';
+      this.setAttribute('aria-label', t(visible ? 'Hide password' : 'Show password'));
+      this.setAttribute('aria-pressed', String(visible));
+      this.querySelector('i').className = visible ? 'fa fa-eye-slash' : 'fa fa-eye';
+    });
+  </script>
+</body>
 </html>

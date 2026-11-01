@@ -1,0 +1,30 @@
+# === Web Framework ===
+Flask==3.0.3
+Werkzeug==3.0.3
+
+# === Database ===
+mysql-connector-python==8.4.0
+# atau jika sebelumnya pakai PyMySQL, ganti baris di atas dengan:
+# PyMySQL==1.1.1
+
+# === AI / Computer Vision ===
+ultralytics==8.4.189       # Same version as the installed Colab checkpoint
+torch==2.3.1
+torchvision==0.18.1
+opencv-python==4.10.0.84
+numpy==1.26.4
+Pillow==10.4.0
+matplotlib==3.9.2
+PyYAML==6.0.2
+
+# === Utilitas Umum ===
+python-dotenv==1.0.1
+pandas==2.2.2
+openpyxl==3.1.5            # untuk export Excel (Defect Log, UAT Report)
+
+# === Testing & Load Testing ===
+pytest==8.2.2
+locust==2.29.1
+
+# === Production Server (untuk deployment Gunicorn/Nginx) ===
+gunicorn==22.0.0; sys_platform != 'win32'
